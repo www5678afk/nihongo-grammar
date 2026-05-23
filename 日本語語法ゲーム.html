@@ -1,0 +1,3034 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>文法勇者の冒険 — 日语语法RPG</title>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --bg: #f6f1eb;
+  --bg2: #faf7f2;
+  --text: #2d2418;
+  --text2: #6b5d4e;
+  --text3: #8c7e6a;
+  --border: #d6c9b8;
+  --accent: #a68b5b;
+  --c1: #7a6f5d;
+  --c2: #8b6f47;
+  --c3: #5a7a5e;
+  --c4: #8a5c3a;
+  --c5: #6a5a7a;
+  --success: #5a7a5e;
+  --danger: #a0522d;
+  --warning: #b8860b;
+  --card: #faf7f2;
+  --hp-fill: #5a7a5e;
+  --enemy-hp-fill: #a0522d;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 2px 12px rgba(45,36,24,.08);
+  --transition: .25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  --bg: #141210;
+  --bg2: #1c1917;
+  --text: #e8ddd0;
+  --text2: #a09080;
+  --text3: #786858;
+  --border: #3a302a;
+  --accent: #c49a6c;
+  --c1: #9a8f7d;
+  --c2: #ab8f67;
+  --c3: #7a9a7e;
+  --c4: #aa7c5a;
+  --c5: #8a7a9a;
+  --success: #7a9a7e;
+  --danger: #c0622d;
+  --warning: #d4a61b;
+  --card: #1c1917;
+  --hp-fill: #7a9a7e;
+  --enemy-hp-fill: #c0622d;
+  --shadow: 0 2px 12px rgba(0,0,0,.3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .3s, color .3s;
+  overflow-x: hidden;
+}
+.game-container {
+  width: 100%; max-width: 480px;
+  min-height: 100vh;
+  position: relative;
+  display: flex; flex-direction: column;
+}
+/* ===== Screen ===== */
+.screen { display: none; flex: 1; flex-direction: column; padding: 20px; }
+.screen.active { display: flex; }
+
+/* ===== Title Screen ===== */
+.title-screen {
+  align-items: center; justify-content: center;
+  text-align: center; gap: 16px;
+  background: linear-gradient(180deg, var(--bg2) 0%, var(--bg) 100%);
+}
+.title-logo {
+  font-family: "Noto Serif SC","Songti SC",serif;
+  font-size: 2.2rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--c2), var(--c4));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+  animation: logoFloat 3s ease-in-out infinite;
+}
+@keyframes logoFloat {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.title-sub {
+  font-size: .9em; color: var(--text3);
+  letter-spacing: .1em;
+}
+.title-desc {
+  font-size: .82em; color: var(--text2);
+  max-width: 280px; line-height: 1.6;
+}
+.title-sparkles { font-size: 1.6em; animation: sparkle 2s ease-in-out infinite; }
+@keyframes sparkle {
+  0%,100% { opacity: .5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 32px;
+  border: none; border-radius: 25px;
+  font-size: 1em; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+  font-family: inherit;
+  min-height: 48px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(.96); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--c2));
+  color: #fff; box-shadow: 0 4px 16px rgba(139,111,71,.3);
+}
+.btn-primary:hover { box-shadow: 0 6px 24px rgba(139,111,71,.45); transform: translateY(-2px); }
+.btn-secondary {
+  background: var(--card); color: var(--text);
+  border: 2px solid var(--border);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm { padding: 8px 18px; font-size: .85em; min-height: 38px; border-radius: 20px; }
+.btn-xs { padding: 5px 12px; font-size: .75em; min-height: 30px; border-radius: 14px; }
+
+/* ===== Top Bar ===== */
+.game-topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.game-topbar .back-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text2); font-size: 1.2em; padding: 4px;
+  display: flex; align-items: center;
+}
+.game-topbar .back-btn:hover { color: var(--accent); }
+.game-topbar .stage-name {
+  flex: 1; font-weight: 600; font-size: .95em;
+  font-family: "Noto Serif SC","Songti SC",serif;
+}
+.game-topbar .stage-info {
+  font-size: .78em; color: var(--text3);
+  display: flex; align-items: center; gap: 8px;
+}
+
+/* ===== Map Screen ===== */
+.map-screen { gap: 8px; }
+.map-title {
+  text-align: center; padding: 16px 0 8px;
+  font-family: "Noto Serif SC","Songti SC",serif;
+}
+.map-title h2 { font-size: 1.3rem; color: var(--text); }
+.map-title p { font-size: .78em; color: var(--text3); margin-top: 4px; }
+
+.player-stats {
+  display: flex; gap: 12px; justify-content: center;
+  flex-wrap: wrap; padding: 8px 0 16px;
+}
+.stat-chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border-radius: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  font-size: .82em; font-weight: 600; color: var(--text2);
+}
+.stat-chip .sc-icon { font-size: 1.1em; }
+.stat-chip .sc-val { color: var(--accent); }
+
+.world-list { display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; }
+.world-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px; border-radius: var(--radius);
+  background: var(--card); border: 2px solid var(--border);
+  cursor: pointer; transition: all var(--transition);
+  text-decoration: none; position: relative;
+}
+.world-card:hover { border-color: var(--accent); box-shadow: var(--shadow); transform: translateX(4px); }
+.world-card.locked { opacity: .45; cursor: not-allowed; pointer-events: none; }
+.world-card.completed { border-color: var(--success); }
+.world-card.completed::after {
+  content: '✓'; position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  font-size: 1.3em; color: var(--success); font-weight: 700;
+}
+.world-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6em; flex-shrink: 0;
+  color: #fff; font-weight: 700;
+}
+.world-body { flex: 1; min-width: 0; }
+.world-name { font-weight: 600; font-size: .95em; color: var(--text); margin-bottom: 2px; }
+.world-desc { font-size: .76em; color: var(--text3); }
+.world-progress {
+  font-size: .72em; color: var(--text3); margin-top: 4px;
+}
+.world-progress-bar {
+  height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px; overflow: hidden;
+}
+.world-progress-fill {
+  height: 100%; border-radius: 2px; transition: width .5s;
+}
+
+/* ===== Battle Screen ===== */
+.battle-screen { gap: 0; padding: 16px; }
+.battle-header {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+.battle-header .bh-back {
+  background: none; border: none; cursor: pointer;
+  color: var(--text2); font-size: 1.1em; padding: 4px;
+}
+.battle-header .bh-title {
+  flex: 1; font-size: .82em; color: var(--text3);
+  font-weight: 600;
+}
+.battle-header .bh-score {
+  font-size: .8em; color: var(--accent); font-weight: 700;
+}
+
+/* Enemy Area */
+.enemy-area {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 0 16px; gap: 8px;
+}
+.enemy-sprite {
+  font-size: 4rem; animation: enemyIdle 2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.15));
+}
+@keyframes enemyIdle {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.enemy-sprite.hit { animation: enemyHit .4s ease-out; }
+@keyframes enemyHit {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-12px); }
+  50% { transform: translateX(12px); }
+  75% { transform: translateX(-6px); }
+  100% { transform: translateX(0); }
+}
+.enemy-name {
+  font-family: "Noto Serif SC","Songti SC",serif;
+  font-weight: 600; font-size: 1.1em; color: var(--text);
+}
+.enemy-hp-bar {
+  width: 220px; height: 10px; background: var(--border);
+  border-radius: 5px; overflow: hidden;
+}
+.enemy-hp-fill {
+  height: 100%; border-radius: 5px;
+  background: var(--enemy-hp-fill);
+  transition: width .5s ease;
+  width: 100%;
+}
+
+/* Battle Log */
+.battle-log {
+  min-height: 28px; text-align: center; padding: 6px 0;
+  font-size: .82em; font-weight: 600; color: var(--text);
+}
+.battle-log.damage { color: var(--accent); }
+.battle-log.enemy-damage { color: var(--danger); }
+.battle-log.combo { color: var(--warning); }
+
+/* Question Area */
+.question-area {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 18px;
+  margin: 8px 0 12px;
+}
+.question-label {
+  font-size: .7em; color: var(--text3); font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px;
+}
+.question-text {
+  font-size: 1.05em; font-weight: 600; color: var(--text);
+  line-height: 1.5; margin-bottom: 4px;
+}
+.question-text .jpq {
+  font-family: "Noto Serif JP","Hiragino Mincho ProN",serif;
+  font-size: 1.1em;
+}
+.question-hint {
+  font-size: .75em; color: var(--text3); margin-top: 4px;
+  font-style: italic;
+}
+
+/* Boss Mechanic Indicator */
+.boss-mech-indicator {
+  text-align: center; padding: 6px 12px;
+  font-size: .75em; font-weight: 600;
+  color: var(--danger); margin-bottom: 4px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  animation: mechPulse 2s ease-in-out infinite;
+}
+@keyframes mechPulse {
+  0%,100% { opacity: .8; }
+  50% { opacity: 1; background: color-mix(in srgb, var(--danger) 15%, transparent); }
+}
+.bmi-badge {
+  display: inline-block; padding: 1px 8px; border-radius: 8px;
+  font-size: .85em; font-weight: 700;
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  color: var(--danger); margin-right: 4px;
+}
+.bmi-badge.broken {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 20%, transparent);
+}
+.bmi-badge.active {
+  animation: badgeGlow 1s ease-in-out infinite;
+}
+@keyframes badgeGlow {
+  0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 30%, transparent); }
+  50% { box-shadow: 0 0 8px 2px color-mix(in srgb, var(--danger) 50%, transparent); }
+}
+
+/* Skill Card Tray */
+.skill-tray {
+  display: flex; gap: 6px; justify-content: center;
+  padding: 4px 0 8px; flex-wrap: wrap;
+}
+.skill-card {
+  display: flex; align-items: center; gap: 3px;
+  padding: 5px 10px; border-radius: 16px;
+  background: var(--card); border: 1.5px solid var(--border);
+  cursor: pointer; font-size: .72em; font-weight: 600;
+  color: var(--text2); transition: all .2s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.skill-card:hover {
+  border-color: var(--accent); color: var(--accent);
+  transform: translateY(-1px); box-shadow: var(--shadow);
+}
+.skill-card:active { transform: scale(.95); }
+.skill-card .sk-icon { font-size: 1.15em; }
+.skill-card .sk-name { white-space: nowrap; }
+.skill-card.used {
+  opacity: .35; pointer-events: none;
+  border-style: dashed;
+}
+
+/* Options */
+.options-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 12px;
+}
+.option-btn {
+  padding: 14px 12px; border: 2px solid var(--border);
+  border-radius: var(--radius-sm); background: var(--card);
+  font-size: 1em; font-weight: 500; cursor: pointer;
+  font-family: inherit; transition: all .15s;
+  text-align: center; min-height: 52px;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--text);
+}
+.option-btn .jpq {
+  font-family: "Noto Serif JP","Hiragino Mincho ProN",serif;
+  font-size: 1.05em;
+}
+.option-btn:hover:not(.disabled) {
+  border-color: var(--accent); background: var(--bg2);
+}
+.option-btn.correct {
+  border-color: var(--success); background: #e0ebe2;
+  color: var(--success); font-weight: 700;
+  animation: pulse .5s ease;
+}
+.option-btn.wrong {
+  border-color: var(--danger); background: #f5e0d8;
+  color: var(--danger);
+  animation: shake .5s ease;
+}
+[data-theme="dark"] .option-btn.correct { background: #1a2a1e; }
+[data-theme="dark"] .option-btn.wrong { background: #2a1a14; }
+[data-theme="dark"] .question-area { background: #211d19; border-color: #4a3e35; }
+[data-theme="dark"] .review-card { background: #211d19; }
+.option-btn.disabled { pointer-events: none; opacity: .6; }
+@keyframes pulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* Player Stats Bar */
+.player-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-top: 1px solid var(--border);
+}
+.player-avatar {
+  font-size: 2rem; flex-shrink: 0;
+}
+.player-info { flex: 1; }
+.player-name { font-size: .82em; font-weight: 600; color: var(--text); }
+.player-hp-bar {
+  height: 8px; background: var(--border);
+  border-radius: 4px; overflow: hidden; margin: 4px 0;
+}
+.player-hp-fill {
+  height: 100%; border-radius: 4px;
+  background: var(--hp-fill); transition: width .5s ease;
+}
+.player-hp-text { font-size: .7em; color: var(--text3); }
+
+.combo-display {
+  flex-shrink: 0; text-align: center;
+  font-size: .85em; font-weight: 700; color: var(--warning);
+  min-width: 48px;
+}
+.combo-display .combo-num { font-size: 1.4em; line-height: 1; }
+
+/* Power-up buttons */
+.powerup-row {
+  display: flex; gap: 8px; justify-content: center;
+  flex-wrap: wrap; padding: 8px 0;
+}
+
+/* ===== Result Screen ===== */
+.result-screen {
+  align-items: center; justify-content: center;
+  text-align: center; gap: 14px;
+}
+.result-icon { font-size: 4rem; animation: popIn .5s ease; }
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.result-title {
+  font-family: "Noto Serif SC","Songti SC",serif;
+  font-size: 1.6rem; font-weight: 700;
+}
+.result-title.win { color: var(--success); }
+.result-title.lose { color: var(--danger); }
+.result-stats {
+  display: flex; flex-direction: column; gap: 6px;
+  color: var(--text2); font-size: .88em; padding: 8px 0;
+}
+.result-stats span { font-weight: 600; color: var(--accent); }
+
+/* ===== Shop Screen ===== */
+.shop-screen { gap: 8px; }
+.shop-title {
+  text-align: center; padding: 16px 0 8px;
+  font-family: "Noto Serif SC","Songti SC",serif;
+}
+.shop-coins {
+  text-align: center; font-size: 1.2em; font-weight: 700;
+  color: var(--warning); padding: 4px 0;
+}
+.shop-items { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.shop-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; border-radius: var(--radius);
+  background: var(--card); border: 2px solid var(--border);
+}
+.shop-item-icon { font-size: 2rem; flex-shrink: 0; }
+.shop-item-body { flex: 1; }
+.shop-item-name { font-weight: 600; font-size: .92em; }
+.shop-item-desc { font-size: .76em; color: var(--text3); }
+.shop-item-cost { font-size: .82em; font-weight: 700; color: var(--warning); }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: var(--bg); padding: 10px 24px;
+  border-radius: 24px; font-size: .85em; font-weight: 600;
+  z-index: 1000; opacity: 0; pointer-events: none;
+  transition: opacity .3s, transform .3s; transform: translateX(-50%) translateY(10px);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== Particles ===== */
+.particles-container {
+  position: fixed; inset: 0; pointer-events: none; z-index: 999;
+}
+.particle {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%;
+  animation: particleFly .8s ease-out forwards;
+}
+@keyframes particleFly {
+  0% { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--px),var(--py)) scale(0); opacity: 0; }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .title-logo { font-size: 1.7rem; }
+  .enemy-sprite { font-size: 3.2rem; }
+  .enemy-hp-bar { width: 180px; }
+  .options-grid { gap: 8px; }
+  .option-btn { padding: 12px 10px; font-size: .92em; min-height: 48px; }
+  .world-card { padding: 12px 14px; }
+}
+@media (max-width: 360px) {
+  .options-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== Optimization: Floating Damage Numbers ===== */
+.float-dmg {
+  position: fixed; pointer-events: none; z-index: 1000;
+  font-size: 1.4em; font-weight: 800; color: var(--accent);
+  animation: floatUp .9s ease-out forwards;
+  text-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.float-dmg.enemy-dmg { color: var(--danger); }
+.float-dmg.crit { color: var(--warning); font-size: 1.8em; }
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  40% { opacity: 1; transform: translateY(-32px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-64px) scale(.8); }
+}
+
+/* ===== Optimization: Screen Shake ===== */
+.shake { animation: screenShake .4s ease-out; }
+@keyframes screenShake {
+  0%,100% { transform: translateX(0); }
+  15% { transform: translateX(-6px) translateY(2px); }
+  30% { transform: translateX(6px) translateY(-2px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+  90% { transform: translateX(2px); }
+}
+
+/* ===== Optimization: Boss Battle Atmosphere ===== */
+.boss-fight .question-area {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 20px rgba(160,82,45,.15);
+  animation: bossPulse 2s ease-in-out infinite;
+}
+@keyframes bossPulse {
+  0%,100% { box-shadow: 0 0 12px rgba(160,82,45,.1); }
+  50% { box-shadow: 0 0 28px rgba(160,82,45,.25); }
+}
+.boss-fight .enemy-sprite {
+  filter: drop-shadow(0 0 12px rgba(255,60,30,.4));
+}
+[data-theme="dark"] .boss-fight .question-area {
+  box-shadow: 0 0 24px rgba(200,80,40,.25);
+}
+
+/* ===== Optimization: Player Damage Flash ===== */
+.player-flash { animation: playerFlash .5s ease-out; }
+@keyframes playerFlash {
+  0% { background: rgba(160,82,45,.2); }
+  100% { background: transparent; }
+}
+
+/* ===== Optimization: Wrong Answer Review Screen ===== */
+.review-screen { gap: 8px; }
+.review-title {
+  text-align: center; padding: 16px 0 8px;
+  font-family: "Noto Serif SC","Songti SC",serif;
+}
+.review-title h2 { font-size: 1.2rem; color: var(--text); }
+.review-title p { font-size: .78em; color: var(--text3); margin-top: 4px; }
+
+.review-filters {
+  display: flex; gap: 6px; flex-wrap: wrap; padding: 0 0 8px;
+  justify-content: center;
+}
+.review-filter-chip {
+  padding: 5px 14px; border: 2px solid var(--border);
+  border-radius: 16px; font-size: .78em; font-weight: 600;
+  cursor: pointer; background: var(--card); color: var(--text2);
+  transition: all .2s; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.review-filter-chip.active {
+  border-color: var(--accent); background: var(--accent); color: #fff;
+}
+.review-filter-chip:hover:not(.active) { border-color: var(--accent); }
+
+.review-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.review-card {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+  transition: all .2s;
+}
+.review-card .rv-label {
+  font-size: .68em; color: var(--text3); font-weight: 700;
+  text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px;
+}
+.review-card .rv-question {
+  font-size: .92em; font-weight: 600; color: var(--text);
+  margin-bottom: 6px; line-height: 1.5;
+}
+.review-card .rv-wrong {
+  font-size: .8em; color: var(--danger); margin-bottom: 2px;
+}
+.review-card .rv-correct {
+  font-size: .8em; color: var(--success); margin-bottom: 4px;
+}
+.review-card .rv-hint {
+  font-size: .72em; color: var(--text3); font-style: italic;
+}
+.review-empty {
+  text-align: center; color: var(--text3); padding: 40px 0;
+  font-size: .9em;
+}
+.review-empty .rv-empty-icon { font-size: 3rem; margin-bottom: 8px; }
+.review-actions {
+  display: flex; gap: 8px; justify-content: center;
+  padding: 12px 0; flex-shrink: 0;
+}
+
+/* ===== Roguelike: Talent Tree Screen ===== */
+.talent-screen { gap: 8px; }
+.talent-header {
+  text-align: center; padding: 16px 0 8px;
+  font-family: "Noto Serif SC","Songti SC",serif;
+}
+.talent-header h2 { font-size: 1.2rem; color: var(--text); }
+.talent-header p { font-size: .78em; color: var(--text3); margin-top: 4px; }
+.talent-coins {
+  text-align: center; font-size: 1.1em; font-weight: 700;
+  color: var(--warning); padding: 4px 0 16px;
+}
+.talent-grid { display: flex; flex-direction: column; gap: 10px; flex: 1; overflow-y: auto; }
+.talent-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: var(--radius);
+  background: var(--card); border: 2px solid var(--border);
+  transition: all var(--transition);
+}
+.talent-card.maxed { border-color: var(--success); opacity: .5; }
+.talent-card .t-icon {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2em; flex-shrink: 0; color: #fff; font-weight: 700;
+}
+.talent-card .t-body { flex: 1; min-width: 0; }
+.talent-card .t-name { font-weight: 600; font-size: .9em; color: var(--text); }
+.talent-card .t-effect { font-size: .72em; color: var(--text3); margin-top: 2px; }
+.talent-card .t-lvl {
+  display: flex; gap: 3px; align-items: center; margin-top: 4px;
+}
+.talent-card .t-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border);
+}
+.talent-card .t-dot.filled { background: var(--accent); }
+.talent-card .t-action {
+  flex-shrink: 0;
+}
+.talent-card .t-cost {
+  font-size: .78em; font-weight: 700; color: var(--warning);
+}
+
+/* ===== Roguelike: Path Map (Branching) ===== */
+.path-screen { gap: 8px; }
+.path-title {
+  text-align: center; padding: 16px 0 8px;
+  font-family: "Noto Serif SC","Songti SC",serif;
+}
+.path-title h2 { font-size: 1.2rem; color: var(--text); }
+.path-title p { font-size: .78em; color: var(--text3); margin-top: 4px; }
+.path-map {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+  align-items: center; gap: 16px; padding: 12px 0;
+}
+.path-layer {
+  display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+}
+.path-node {
+  width: 90px; padding: 10px 8px; border-radius: var(--radius);
+  text-align: center; cursor: pointer; transition: all var(--transition);
+  border: 2px solid var(--border); background: var(--card);
+  font-size: .76em; font-weight: 600; color: var(--text);
+  position: relative;
+}
+.path-node:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.path-node.done { opacity: .4; pointer-events: none; }
+.path-node.taken { border-color: var(--accent); }
+.path-node .pn-icon { font-size: 1.6em; display: block; margin-bottom: 4px; }
+.path-node .pn-name { font-size: .85em; line-height: 1.3; }
+.path-node .pn-meta { font-size: .7em; color: var(--text3); margin-top: 2px; }
+.path-node.type-easy { border-color: #97C459; }
+.path-node.type-hard { border-color: #EF9F27; }
+.path-node.type-mystery { border-color: #378ADD; }
+.path-node.type-shop { border-color: #D4537E; }
+.path-node.type-boss { border-color: #E24B4A; }
+.path-node .pn-mod {
+  display: inline-block; padding: 1px 6px; border-radius: 8px;
+  font-size: .65em; margin-top: 2px; background: rgba(0,0,0,.08);
+}
+[data-theme="dark"] .path-node .pn-mod { background: rgba(255,255,255,.08); }
+
+/* ===== Roguelike: Artifact Pick Overlay ===== */
+.artifact-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7);
+  z-index: 500; display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.artifact-panel {
+  background: var(--bg); border-radius: var(--radius);
+  padding: 24px 20px; max-width: 420px; width: 100%;
+  border: 2px solid var(--accent); text-align: center;
+}
+.artifact-panel h3 {
+  font-family: "Noto Serif SC","Songti SC",serif;
+  font-size: 1.1rem; color: var(--accent); margin-bottom: 4px;
+}
+.artifact-panel .ap-sub { font-size: .78em; color: var(--text3); margin-bottom: 16px; }
+.artifact-choices { display: flex; flex-direction: column; gap: 10px; }
+.artifact-choice {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-radius: var(--radius);
+  background: var(--card); border: 2px solid var(--border);
+  cursor: pointer; transition: all var(--transition); text-align: left;
+}
+.artifact-choice:hover { border-color: var(--accent); transform: translateX(4px); }
+.artifact-choice .ac-icon { font-size: 1.8em; flex-shrink: 0; }
+.artifact-choice .ac-body { flex: 1; }
+.artifact-choice .ac-name { font-weight: 600; font-size: .9em; color: var(--text); }
+.artifact-choice .ac-desc { font-size: .74em; color: var(--text3); margin-top: 2px; }
+.artifact-choice .ac-rarity { font-size: .7em; margin-top: 2px; }
+.artifact-choice .ac-rarity.common { color: var(--text3); }
+.artifact-choice .ac-rarity.rare { color: var(--accent); }
+.artifact-choice .ac-rarity.legendary { color: var(--warning); }
+
+/* ===== Roguelike: Enemy Modifier Badge ===== */
+.mod-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: .7em; font-weight: 600; margin-left: 6px;
+  vertical-align: middle;
+}
+.mod-badge.mod-iron { background: #ccc; color: #555; }
+.mod-badge.mod-fury { background: #FAC775; color: #854F0B; }
+.mod-badge.mod-regen { background: #C0DD97; color: #3B6D11; }
+.mod-badge.mod-slow { background: #B5D4F4; color: #185FA5; }
+[data-theme="dark"] .mod-badge.mod-iron { background: #444; color: #aaa; }
+
+  /* ===== Translation Button ===== */
+  .translation-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: .6em; font-weight: 700;
+    border: none; cursor: pointer; margin-left: 4px;
+    vertical-align: middle; transition: all .2s;
+    padding: 0; line-height: 1;
+  }
+  .translation-btn:hover { transform: scale(1.2); box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+  .translation-text {
+    display: none; font-size: .82em; color: var(--text2);
+    margin-top: 4px; padding: 6px 10px;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    border-radius: var(--radius-sm); border-left: 3px solid var(--accent);
+  }
+  .translation-text.show { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { 0% { opacity: 0; transform: translateY(-4px); } 100% { opacity: 1; transform: translateY(0); } }
+
+  /* ===== Prologue & Ending Screens ===== */
+  .prologue-screen, .ending-screen {
+    position: fixed; inset: 0; background: var(--bg); z-index: 2000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 40px 24px; text-align: center; gap: 16px;
+    animation: fadeIn .5s ease;
+  }
+  .prologue-screen .scene-text, .ending-screen .scene-text {
+    font-family: "Noto Serif SC","Songti SC",serif;
+    font-size: 1.1rem; line-height: 2; color: var(--text);
+    max-width: 480px; white-space: pre-line;
+  }
+  .prologue-screen .npc-name, .ending-screen .npc-name {
+    font-size: .82em; font-weight: 700; color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .prologue-screen .scene-icon, .ending-screen .scene-icon {
+    font-size: 4rem; animation: logoFloat 3s ease-in-out infinite;
+  }
+  .prologue-screen .skip-btn, .ending-screen .skip-btn {
+    position: absolute; top: 16px; right: 16px;
+    background: none; border: 1px solid var(--border); color: var(--text3);
+    padding: 6px 14px; border-radius: 16px; font-size: .72em; cursor: pointer;
+  }
+  .prologue-screen .skip-btn:hover, .ending-screen .skip-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      transition-duration: .01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="game-container" id="gameContainer">
+  <!-- ===== TITLE SCREEN ===== -->
+  <div class="screen title-screen active" id="titleScreen">
+    <div class="title-sparkles">⚔️📜✨</div>
+    <div class="title-logo">文法勇者の冒険</div>
+    <div class="title-sub">GRAMMAR HERO'S QUEST</div>
+    <div class="title-desc">用语法知识击败怪物，征服五大领域，成为日语语法大师！</div>
+    <button class="btn btn-primary" id="btnStart" style="margin-top:12px">
+      ⚔️ 开始冒险
+    </button>
+    <button class="btn btn-secondary btn-sm" id="btnContinue" style="display:none">
+      📂 继续游戏
+    </button>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-secondary btn-xs" id="btnReset">🔄 新游戏</button>
+      <button class="btn btn-secondary btn-xs" id="btnTheme">🌓 主题</button>
+    </div>
+  </div>
+
+  <!-- ===== MAP SCREEN ===== -->
+  <div class="screen map-screen" id="mapScreen">
+    <div class="game-topbar">
+      <div class="stage-name">🗺️ 世界地图</div>
+      <div class="stage-info">
+        <span id="mapLevel">Lv.1</span>
+        <span>🏆<span id="mapScore">0</span></span>
+      </div>
+      <button class="btn btn-xs btn-secondary" id="btnShop" style="flex-shrink:0">🏪 商店</button>
+      <button class="btn btn-xs btn-secondary" id="btnReview" style="flex-shrink:0">📖 错题</button>
+      <button class="btn btn-xs btn-secondary" id="btnTalent" style="flex-shrink:0">⭐ 天赋</button>
+    </div>
+    <div class="world-list" id="worldList"></div>
+  </div>
+
+  <!-- ===== BATTLE SCREEN ===== -->
+  <div class="screen battle-screen" id="battleScreen">
+    <div class="battle-header">
+      <button class="bh-back" id="btnFlee">←</button>
+      <span class="bh-title" id="battleStageName">Stage</span>
+      <span class="bh-score">🏆<span id="battleScore">0</span></span>
+    </div>
+    <div class="enemy-area">
+      <div class="enemy-sprite" id="enemySprite">👹</div>
+      <div class="enemy-name" id="enemyName">语法妖怪</div>
+      <div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemyHpFill"></div></div>
+      <div style="font-size:.72em;color:var(--text3)" id="enemyHpText">100/100</div>
+    </div>
+    <div class="battle-log" id="battleLog"></div>
+    <div class="boss-mech-indicator" id="bossMechIndicator" style="display:none"></div>
+    <div class="skill-tray" id="skillTray"></div>
+    <div class="question-area">
+      <div class="question-label" id="questionLabel">问题类型</div>
+      <div class="question-text" id="questionText"></div>
+      <div class="question-hint" id="questionHint"></div>
+    </div>
+    <div class="options-grid" id="optionsGrid"></div>
+    <div class="powerup-row" id="powerupRow">
+      <button class="btn btn-xs btn-secondary" id="puHint" title="消除两个错误选项">💡 提示 (-20💰)</button>
+      <button class="btn btn-xs btn-secondary" id="puSkip" title="跳过此题(不扣血)">⏭️ 跳过 (-30💰)</button>
+    </div>
+    <div class="player-bar">
+      <div class="player-avatar">🧑‍🎓</div>
+      <div class="player-info">
+        <div class="player-name">语法勇者</div>
+        <div class="player-hp-bar"><div class="player-hp-fill" id="playerHpFill" style="width:100%"></div></div>
+        <div class="player-hp-text" id="playerHpText">100/100</div>
+      </div>
+      <div class="combo-display"><div class="combo-num" id="comboCount">0</div>连击</div>
+    </div>
+  </div>
+
+  <!-- ===== RESULT SCREEN ===== -->
+  <div class="screen result-screen" id="resultScreen">
+    <div class="result-icon" id="resultIcon"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-stats" id="resultStats"></div>
+    <button class="btn btn-primary" id="btnNext" style="margin-top:8px"></button>
+    <button class="btn btn-secondary btn-sm" id="btnMap">🗺️ 返回地图</button>
+  </div>
+
+  <!-- ===== SHOP SCREEN ===== -->
+  <div class="screen shop-screen" id="shopScreen">
+    <div class="game-topbar">
+      <button class="back-btn" id="btnShopBack">← 返回</button>
+      <div class="stage-name">🏪 道具商店</div>
+    </div>
+    <div class="shop-coins">💰 <span id="shopCoins">0</span> 金币</div>
+    <div class="shop-items" id="shopItems"></div>
+  </div>
+
+  <!-- ===== REVIEW SCREEN (Wrong Answer Notebook) ===== -->
+  <div class="screen review-screen" id="reviewScreen">
+    <div class="game-topbar">
+      <button class="back-btn" id="btnReviewBack">← 返回</button>
+      <div class="stage-name">📖 错题本</div>
+      <div style="font-size:.72em;color:var(--text3)" id="reviewCount"></div>
+    </div>
+    <div class="review-filters" id="reviewFilters"></div>
+    <div class="review-list" id="reviewList"></div>
+    <div class="review-actions">
+      <button class="btn btn-primary btn-sm" id="btnChallengeWrong">⚔️ 挑战错题</button>
+      <button class="btn btn-secondary btn-xs" id="btnClearWrong">🗑️ 清空错题</button>
+    </div>
+  </div>
+  <!-- ===== PROLOGUE SCREEN ===== -->
+  <div class="prologue-screen" id="prologueScreen" style="display:none">
+    <div class="scene-icon">📜</div>
+    <div class="scene-text" id="prologueText"></div>
+    <button class="btn btn-primary" id="btnStartPrologue" style="margin-top:24px">次へ →</button>
+    <button class="skip-btn" onclick="skipPrologue()">スキップ (Skip)</button>
+  </div>
+
+  <!-- ===== ENDING SCREEN ===== -->
+  <div class="ending-screen" id="endingScreen" style="display:none">
+    <div class="scene-icon">✨</div>
+    <div class="scene-text" id="endingText"></div>
+    <button class="btn btn-primary" id="btnRestart" style="margin-top:24px">もう一度 (再来一次)</button>
+    <button class="skip-btn" onclick="showMap()">タイトルへ (返回标题)</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="particles-container" id="particles"></div>
+
+<div class="artifact-overlay" id="artifactOverlay" style="display:none">
+  <div class="artifact-panel" id="artifactPanel"></div>
+</div>
+
+<div class="screen talent-screen" id="talentScreen">
+  <div class="game-topbar">
+    <button class="back-btn" id="btnTalentBack">← 返回</button>
+    <div class="stage-name">⭐ 天赋树</div>
+    <div style="font-size:.72em;color:var(--text3)" id="talentSummary"></div>
+  </div>
+  <div class="talent-coins">💰 <span id="talentCoins">0</span> 金币</div>
+  <div class="talent-grid" id="talentGrid"></div>
+</div>
+
+<div class="screen path-screen" id="pathScreen">
+  <div class="game-topbar">
+    <button class="back-btn" id="btnPathBack">← 地图</button>
+    <div class="stage-name" id="pathWorldName">世界</div>
+    <div style="font-size:.72em;color:var(--text3)">❤️<span id="pathHp">100</span></div>
+  </div>
+  <div class="path-map" id="pathMap"></div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ========== GAME DATA ==========
+  const WORLDS = [
+    { id: 'w1', name: '词类の森', desc: '12种品词分类', color: '#7a6f5d', icon: '🌳', stages: [
+      { id: 'w1s1', name: '入口小径', ename: '品词小鬼', eicon: '👾', hp: 50, damage: 10, questions: 4, flavor: '静かな森の入り口。語の分類の旅が、ここから始まる。', flavorZh: '安静的森林入口。词语分类的旅途，从此开始。' },
+      { id: 'w1s2', name: '独立词之泉', ename: '体言守卫', eicon: '🗿', hp: 60, damage: 12, questions: 5, flavor: '泉の水面に、自立語たちの姿が映っている。', flavorZh: '泉水映照出独立词们的身影。' },
+      { id: 'w1s3', name: '附属词之桥', ename: '助词幽灵', eicon: '👻', hp: 65, damage: 14, questions: 5, flavor: '橋の下を、付属語の流れが静かに過ぎてゆく。', flavorZh: '桥下，附属词的流水静静流过。' },
+      { id: 'w1s4', name: '用言之道', ename: '活用史莱姆', eicon: '🟢', hp: 70, damage: 16, questions: 5, flavor: '道の両側で、用言たちが賑やかに姿を変えている。', flavorZh: '道路两旁，用言们热闹地改变着形态。' },
+      { id: 'w1s5', name: '体言之门', ename: '词类骑士', eicon: '⚔️', hp: 85, damage: 18, questions: 5, flavor: '巨大な門の向こうに、体言の殿堂が見える。', flavorZh: '巨大的门后，可以看见体言的殿堂。' },
+      { id: 'w1boss', name: 'Boss·品詞の守護者', ename: '词类守护者', eicon: '🐉', hp: 130, damage: 24, questions: 7, boss: true, flavor: '森の奥深く——品詞の守護者が眠る祠。', flavorZh: '在森林深处——词类守护者沉眠的祠堂。', mechanic: { type: 'mirror_shield', shieldPct: 0.4, breakCombo: 4, desc: '🛡️ 词类之盾：减免40%伤害，连击≥4可击破' } }
+    ]},
+    { id: 'w2', name: '活用の山', desc: '动词·形容词变形', color: '#8b6f47', icon: '⛰️', stages: [
+      { id: 'w2s1', name: '山麓训练场', ename: '一段小鬼', eicon: '👾', hp: 60, damage: 12, questions: 4, flavor: '修行者の汗が、この地を濡らしている。', flavorZh: '修行者的汗水，浸湿了这片土地。' },
+      { id: 'w2s2', name: '五段峭壁', ename: '五段石像', eicon: '🗿', hp: 70, damage: 15, questions: 5, flavor: '五段の岩肌が、鋭くそびえ立つ——活用の壁。', flavorZh: '五段岩壁，锐利耸立——活用之壁。' },
+      { id: 'w2s3', name: 'て形吊桥', ename: '音便蝙蝠', eicon: '🦇', hp: 75, damage: 16, questions: 5, flavor: '揺れる吊り橋——音便の風が吹き抜ける。', flavorZh: '摇晃的吊桥——音便之风吹拂而过。' },
+      { id: 'w2s4', name: 'た形冰川', ename: '过去幽灵', eicon: '👻', hp: 80, damage: 18, questions: 5, flavor: '過去の記憶が、青く凍りついている。', flavorZh: '过去的记忆，冻结成蓝色。' },
+      { id: 'w2s5', name: '活用山顶', ename: '变形魔人', eicon: '🧙', hp: 95, damage: 20, questions: 5, flavor: '山頂から、全ての活用形が一望できる。', flavorZh: '从山顶，所有活用形尽收眼底。' },
+      { id: 'w2boss', name: 'Boss·活用の魔術師', ename: '活用魔术师', eicon: '🐉', hp: 160, damage: 26, questions: 7, boss: true, flavor: '頂に立つは、変幻自在の魔術師——', flavorZh: '立于顶端的，是变幻自在的魔术师——', mechanic: { type: 'phase_shift', phases: [
+        { hpPct: 0.5, name: 'て形暴走', desc: '⚡ 只出て形/た形/ない形题目，BOSS伤害+30%', labelFilter: ['て形','た形','ない形','ば形','意志形'], hpMult: 1.0, dmgMult: 1.3, regen: 0 },
+        { hpPct: 0, name: '最终形态', desc: '💀 BOSS每回合回复10HP，伤害+50%', labelFilter: null, hpMult: 1.0, dmgMult: 1.5, regen: 10 }
+      ] } }
+    ]},
+    { id: 'w3', name: '助词の洞窟', desc: '10个格助词', color: '#5a7a5e', icon: '🕳️', stages: [
+      { id: 'w3s1', name: '洞窟入口', ename: 'が·を小鬼', eicon: '👾', hp: 60, damage: 12, questions: 4, flavor: '暗闇の中で、小さな助詞たちが光っている。', flavorZh: '黑暗中，小小的助词们在发光。' },
+      { id: 'w3s2', name: 'に·で岔路', ename: '场所幽灵', eicon: '👻', hp: 70, damage: 14, questions: 5, flavor: '分かれ道——「に」は点、「で」は舞台を示す。', flavorZh: '岔路——「に」指示点，「で」指示舞台。' },
+      { id: 'w3s3', name: 'へ·と隧道', ename: '方向蝙蝠', eicon: '🦇', hp: 75, damage: 16, questions: 5, flavor: '遠くへ、誰かと——方向と同伴の響き。', flavorZh: '去向远方、与某人——方向与同伴的回响。' },
+      { id: 'w3s4', name: 'から·まで深渊', ename: '起终点魔', eicon: '🧟', hp: 80, damage: 18, questions: 5, flavor: '始まりから終わりまで——時の深淵。', flavorZh: '从开始到结束——时间的深渊。' },
+      { id: 'w3s5', name: 'は·が迷宫', ename: '主题骑士', eicon: '⚔️', hp: 90, damage: 20, questions: 5, flavor: '主題か、主語か——迷宮の核心。', flavorZh: '主题，还是主语——迷宫的核心。' },
+      { id: 'w3boss', name: 'Boss·格助詞の龍', ename: '格助词之龙', eicon: '🐉', hp: 190, damage: 28, questions: 8, boss: true, flavor: '洞窟の最深部——龍の息遣いが聞こえる。', flavorZh: '洞窟最深处——能听到龙的呼吸。', mechanic: { type: 'mirror_shield', shieldPct: 0.5, breakCombo: 5, desc: '🛡️ 助词之盾：减免50%伤害，连击≥5可击破' } }
+    ]},
+    { id: 'w4', name: '時空の塔', desc: '时态·体·态', color: '#8a5c3a', icon: '🏰', stages: [
+      { id: 'w4s1', name: '时态层', ename: '时间守卫', eicon: '⏳', hp: 70, damage: 14, questions: 5, flavor: '過去と非過去が、螺旋階段のように交差する。', flavorZh: '过去与非过去，如螺旋楼梯般交错。' },
+      { id: 'w4s2', name: 'ている回廊', ename: '体态幽灵', eicon: '👻', hp: 80, damage: 16, questions: 5, flavor: '「している」「してある」——時間の層が重なる。', flavorZh: '「している」「してある」——时间的层叠。' },
+      { id: 'w4s3', name: '被动之间', ename: '被动魔人', eicon: '🧙', hp: 85, damage: 18, questions: 5, flavor: '誰かに、何かを——される側の視点。', flavorZh: '被某人、被怎样——被动一方的视角。' },
+      { id: 'w4s4', name: '使役之厅', ename: '使役骑士', eicon: '⚔️', hp: 90, damage: 20, questions: 5, flavor: 'させる、させられる——力を与え、奪われる。', flavorZh: '使役、使役被动——赋予力量、又被剥夺。' },
+      { id: 'w4s5', name: '授受之顶', ename: '授受魔龙', eicon: '🐲', hp: 100, damage: 22, questions: 5, flavor: 'あげる、くれる、もらう——恩恵の連鎖。', flavorZh: '给予、赐予、获得——恩惠的连锁。' },
+      { id: 'w4boss', name: 'Boss·時空の支配者', ename: '时空支配者', eicon: '🐉', hp: 200, damage: 30, questions: 8, boss: true, flavor: '塔の最上階——時空の歪みに、支配者が佇む。', flavorZh: '塔的最上层——时空扭曲中，支配者伫立。', mechanic: { type: 'phase_shift', phases: [
+        { hpPct: 0.5, name: '时态回溯', desc: '⏳ 每3题重现一题旧题，答错伤害×1.5', labelFilter: null, hpMult: 1.0, dmgMult: 1.0, regen: 0, timeLoop: 3, loopPenalty: 1.5 },
+        { hpPct: 0, name: '时空崩坏', desc: '💥 每2题重现旧题，答错伤害×2.0', labelFilter: null, hpMult: 1.0, dmgMult: 1.2, regen: 0, timeLoop: 2, loopPenalty: 2.0 }
+      ] } }
+    ]},
+    { id: 'w5', name: '句型の城', desc: '命令·禁止·义务·许可', color: '#6a5a7a', icon: '🏯', stages: [
+      { id: 'w5s1', name: '城门广场', ename: '命令守卫', eicon: '🗿', hp: 80, damage: 16, questions: 5, flavor: '城門の前に、命令文の旗が翻っている。', flavorZh: '城门前，命令句的旗帜飘扬。' },
+      { id: 'w5s2', name: '禁止之塔', ename: '禁止魔人', eicon: '🧙', hp: 90, damage: 18, questions: 5, flavor: '「してはいけない」——禁じられた文字が壁を覆う。', flavorZh: '「不能做」——禁忌文字覆盖墙壁。' },
+      { id: 'w5s3', name: '愿望之间', ename: '愿望幽灵', eicon: '👻', hp: 95, damage: 20, questions: 5, flavor: '「たい」「ほしい」——願いが部屋中に響く。', flavorZh: '「想做」「想要」——愿望在房间中回荡。' },
+      { id: 'w5s4', name: '义务之厅', ename: '义务骑士', eicon: '⚔️', hp: 100, damage: 22, questions: 5, flavor: '「なければならない」——義務の鎖が響く。', flavorZh: '「必须做」——义务的锁链在回响。' },
+      { id: 'w5s5', name: '敬语天守阁', ename: '敬语大师', eicon: '🧙‍♂️', hp: 110, damage: 24, questions: 5, flavor: '最上階——敬語の光が、礼儀作法を照らし出す。', flavorZh: '最上层——敬语之光，映照出礼仪之道。' },
+      { id: 'w5boss', name: 'Boss·文法の魔王', ename: '语法魔王', eicon: '👹', hp: 260, damage: 32, questions: 10, boss: true, flavor: '玉座の間——魔王が、静かに待っていた。', flavorZh: '王座之间——魔王，静静等待着。', mechanic: { type: 'final_gate', gateNeeded: 2, damageBoost: 2.5, desc: '🚪 终焉之门：需连续答对2题才能造成伤害，但伤害×2.5' } }
+    ]}
+  ];
+
+  // ========== QUESTION BANK ==========
+  const QUESTIONS = {
+    w1: [ // Word Classes (词类) - 15 Qs
+      { q: '"きれい"属于什么词类？', opts: ['イ形容词', 'ナ形容词', '名词', '动词'], ans: 1, hint: '汉字是「綺麗」，修饰名词时用「きれいな+N」', label: '词类判断' },
+      { q: '以下哪个是"独立词"且"有活用"？', opts: ['名词', '副词', '动词', '助词'], ans: 2, hint: '独立词中,动词/イ形/ナ形有活用', label: '词类属性' },
+      { q: '"とても"属于什么词类？', opts: ['形容词', '名词', '副词', '助动词'], ans: 2, hint: '修饰用言（动词/形容词）的词', label: '词类判断' },
+      { q: '"この"属于什么词类？', opts: ['名词', '连体词', '副词', '形容词'], ans: 1, hint: '只能修饰体言（名词），不能单独使用', label: '词类判断' },
+      { q: '"しかし"属于什么词类？', opts: ['副词', '助词', '接续词', '感叹词'], ans: 2, hint: '连接两个句子的词', label: '词类判断' },
+      { q: '以下哪个属于"附属词"？', opts: ['动词', '名词', '助词', '形容词'], ans: 2, hint: '不能独立使用，必须附着在其他词后面', label: '词类属性' },
+      { q: '体言包括哪些词类？', opts: ['动词+形容词', '名词+数词+代词', '副词+连体词', '助词+助动词'], ans: 1, hint: '体言=不能活用的名词性成分', label: '词类概念' },
+      { q: '用言包括哪些词类？', opts: ['名词+代词', '动词+イ形+ナ形', '副词+接续词', '助词+助动词'], ans: 1, hint: '用言=可以活用的谓语性成分', label: '词类概念' },
+      { q: '"はい"属于什么词类？', opts: ['接续词', '感叹词', '副词', '助词'], ans: 1, hint: '用于应答、感叹', label: '词类判断' },
+      { q: '日语的12类词分为两大阵营，分法依据是？', opts: ['能否活用', '能否独立使用', '有无汉字', '是否来自汉语'], ans: 1, hint: '自立語 vs 付属語', label: '词类体系' },
+      { q: 'ナ形容词在日语学校语法中被称为？', opts: ['形容詞', '形容動詞', '連体詞', '副詞'], ans: 1, hint: '意义上像形容词，语法上像动词', label: '词类概念' },
+      { q: '副词修饰什么？', opts: ['名词', '用言（动词/形容词）', '助词', '接续词'], ans: 1, hint: '副=辅助、伴随，修饰用言', label: '词类功能' },
+      { q: '连体词修饰什么？', opts: ['动词', '形容词', '体言（名词）', '助动词'], ans: 2, hint: '连体=连接体言', label: '词类功能' },
+      { q: '"勉強する"属于哪类动词？', opts: ['Ⅰ类五段', 'Ⅱ类一段', 'Ⅲ类サ変', 'Ⅳ类カ変'], ans: 2, hint: '动作性名词+する=サ変動詞', label: '动词分类' },
+      { q: '"来る"属于哪类动词？', opts: ['Ⅰ类五段', 'Ⅱ类一段', 'Ⅲ类サ変', 'Ⅳ类カ変'], ans: 3, hint: '仅此一词，独一无二的カ変', label: '动词分类' },
+    ],
+    w2: [ // Conjugations (活用) - 18 Qs
+      { q: '"書く"的て形是？', opts: ['書くて', '書いて', '書きて', '書いた'], ans: 1, hint: 'く→いて（Ⅰ类五段音便规则）', label: '动词て形' },
+      { q: '"読む"的て形是？', opts: ['読むて', '読みて', '読んで', '読んだ'], ans: 2, hint: 'む→んで（Ⅰ类鼻音便）', label: '动词て形' },
+      { q: '"食べる"的ない形是？', opts: ['食べない', '食べらない', '食べないる', '食べらん'], ans: 0, hint: 'Ⅱ类：去掉る直接加ない', label: '动词ない形' },
+      { q: '"する"的た形是？', opts: ['するた', 'すた', 'した', 'しるた'], ans: 2, hint: 'Ⅲ类不规则：する→した', label: '动词た形' },
+      { q: '"来る"的ます形是？', opts: ['くるます', 'きます', 'こます', 'くます'], ans: 1, hint: 'Ⅳ类不规则：来る→きます', label: '动词ます形' },
+      { q: '"話す"的て形是？', opts: ['話して', '話いて', '話すて', '話いて'], ans: 0, hint: 'す→して（唯一以す结尾的Ⅰ类）', label: '动词て形' },
+      { q: '"帰る"的ない形是？', opts: ['帰ない', '帰らない', '帰りない', '帰らん'], ans: 1, hint: 'Ⅰ类伪装者！虽是「る」前い段,但仍按Ⅰ类:', label: '动词分类·伪装者' },
+      { q: '"高い"的过去形是？', opts: ['高いた', '高かった', '高いた', '高くた'], ans: 1, hint: 'イ形容词过去: い→かった', label: 'イ形活用' },
+      { q: '"静かだ"的连体形（修饰名词）是？', opts: ['静か', '静かだ', '静かな', '静かに'], ans: 2, hint: 'ナ形容词+な+名词', label: 'ナ形活用' },
+      { q: 'Ⅰ类动词て形的音便类型有几种？', opts: ['3种', '4种', '2种', '5种'], ans: 1, hint: 'イ音便·促音便·撥音便 + 無音便(す→して)', label: '活用概念' },
+      { q: '"行く"的て形是什么？（注意例外）', opts: ['行いて', '行って', '行くて', '行んだ'], ans: 1, hint: 'く→いて是规则,但行く是例外！', label: '动词て形·例外' },
+      { q: '"切る"的ない形是？', opts: ['切ない', '切らない', '切りない', '切らん'], ans: 1, hint: 'Ⅰ类伪装者！切る→切らない', label: '动词分类·伪装者' },
+      { q: '"知る"属于几类动词？', opts: ['Ⅰ类', 'Ⅱ类', 'Ⅲ类', 'Ⅳ类'], ans: 0, hint: 'Ⅰ类伪装者！知る→知らない', label: '动词分类·伪装者' },
+      { q: '"いい"的过去形是？', opts: ['いかった', 'よかった', 'いいた', 'よいた'], ans: 1, hint: '唯一的不规则イ形容词,词干完全变化', label: 'イ形活用·例外' },
+      { q: '"書く"的ば形是？', opts: ['書くば', '書けば', '書きば', '書かば'], ans: 1, hint: 'Ⅰ类: う段→え段+ば', label: '动词ば形' },
+      { q: '"食べる"的意志形是？', opts: ['食べろう', '食べよう', '食べるう', '食ぶろう'], ans: 1, hint: 'Ⅱ类: る→よう', label: '动词意志形' },
+      { q: '"学生だ"的过去形是？', opts: ['学生た', '学生だた', '学生だった', '学生だかった'], ans: 2, hint: '名词+だ→だった（过去）', label: '名词系活用' },
+      { q: 'Ⅰ类动词て形的"う·つ·る"结尾，变成什么？', opts: ['んで', 'って', 'いて', 'して'], ans: 1, hint: '促音便：買う→買って·待つ→待って·取る→取って', label: '动词て形音便' },
+    ],
+    w3: [ // Particles (助词) - 18 Qs
+      { q: '「空__飛ぶ。」填入合适的助词', opts: ['が', 'を', 'に', 'で'], ans: 1, hint: '移动路径用を（飛ぶ是移动动词）', label: '助词填空' },
+      { q: '「図書館__勉強する。」填入合适的助词', opts: ['に', 'を', 'で', 'が'], ans: 2, hint: '动作进行的场所用で', label: '助词填空' },
+      { q: '「机の上に本__ある。」填入合适的助词', opts: ['を', 'が', 'に', 'で'], ans: 1, hint: '存在句主语用が', label: '助词填空' },
+      { q: '格助词「に」有多少种主要用法？', opts: ['4种', '5种', '8种', '6种'], ans: 2, hint: '时间点·存在场所·对象·目的地·变化结果·被动施事·目的·频率', label: '助词概念' },
+      { q: '「友達__遊ぶ。」填入合适的助词', opts: ['に', 'を', 'と', 'で'], ans: 2, hint: '共同动作者用と', label: '助词填空' },
+      { q: '「私はコーヒー__飲むが、お酒__飲まない。」两处应填？', opts: ['が·が', 'は·は', 'を·は', 'は·を'], ans: 1, hint: '对比用法,は替代を', label: '助词辨析' },
+      { q: '「誰__来た？」填入合适的助词', opts: ['は', 'が', 'を', 'に'], ans: 1, hint: '疑问词作主语用が', label: '助词填空' },
+      { q: '「パス__学校に行く。」填入合适的助词', opts: ['に', 'を', 'で', 'から'], ans: 2, hint: '交通工具/手段用で', label: '助词填空' },
+      { q: '「米__酒を作る。」填入合适的助词', opts: ['で', 'に', 'から', 'を'], ans: 2, hint: '原料(化学变化,看不见原形)用から', label: '助词辨析' },
+      { q: '「家__出る。」填入合适的助词', opts: ['に', 'で', 'から', 'を'], ans: 3, hint: '离开的起点用を（家を出る）', label: '助词填空' },
+      { q: '「5時__待つ。」vs「5時__に提出。」', opts: ['まで·まで', 'に·まで', 'まで·までに', 'に·に'], ans: 2, hint: '持续终点vs截止时间点', label: '助词辨析' },
+      { q: '「に」和「で」的区别，哪项正确？', opts: ['に=动态·で=静态', 'に=存在点·で=动作舞台', '两者可互换', 'に=原因·で=手段'], ans: 1, hint: 'に是钉子,で是舞台', label: '助词辨析' },
+      { q: '从句中的主语必须用什么助词？', opts: ['は', 'が', 'を', 'に'], ans: 1, hint: '「私が作った料理」——从句内主语必用が', label: '助词规则' },
+      { q: '提示助词「しか」后必须接什么形式？', opts: ['肯定形', '否定形', '命令形', '意志形'], ans: 1, hint: 'しか〜ない（只…/仅…）', label: '助词概念' },
+      { q: '表示"全部列举"的并列助词是？', opts: ['や', 'とか', 'と', 'し'], ans: 2, hint: 'AとB=全部列举, AやB=部分列举', label: '助词概念' },
+      { q: '格助词「へ」的正确读音是？', opts: ['へ(he)', 'え(e)', 'へ(he)或え(e)', 'わ(wa)'], ans: 1, hint: '作格助词时发音为「え」', label: '助词发音' },
+      { q: '「窓__閉まった。」填入合适的助词（自然关闭）', opts: ['を', 'に', 'が', 'で'], ans: 2, hint: '自动词句主语用が', label: '助词填空' },
+      { q: '哪个是"迷惑被动"的典型表达？', opts: ['先生にほめられた', '雨に降られた', '友達に会われた', '以上都是'], ans: 3, hint: '日语被动可分直接被动和迷惑被动', label: '助词·态' },
+    ],
+    w4: [ // Tense/Aspect/Voice (时态体态) - 18 Qs
+      { q: '"本を読んでいる"的"ている"表示什么？', opts: ['过去', '正在进行', '未来', '愿望'], ans: 1, hint: '持续动词+ている=进行中', label: '体·ている' },
+      { q: '"窓が割れている"的"ている"表示什么？', opts: ['正在进行', '结果状态', '习惯', '经验'], ans: 1, hint: '瞬间动词+ている=结果状态持续', label: '体·ている' },
+      { q: '"V-てしまう"可以表示什么？', opts: ['正在进行', '完了/遗憾', '可能', '被动'], ans: 1, hint: '双重含义：完了态+遗憾语气', label: '体·てしまう' },
+      { q: '"日本語が話せる"是什么态？', opts: ['被动态', '使役态', '可能态', '授受态'], ans: 2, hint: '〜(ら)れる = 能/会', label: '态·可能' },
+      { q: '"先生にほめられた"是什么态？', opts: ['可能态', '使役态', '被动态', '主动态'], ans: 2, hint: 'に标记施事=被动态', label: '态·被动' },
+      { q: '"子供に勉強させる"是什么态？', opts: ['被动态', '可能态', '使役态', '授受态'], ans: 2, hint: '〜せる/させる=让/使', label: '态·使役' },
+      { q: '授受态「V-てくれる」的方向是？', opts: ['我方→别人', '别人→我方', '我方←别人', '双向'], ans: 1, hint: '别人为我方做,隐含感激', label: '态·授受' },
+      { q: '授受态「V-てあげる」的方向是？', opts: ['别人→我方', '我方→别人', '我方←别人', '双向'], ans: 1, hint: '我方为别人做,注意对长辈慎用', label: '态·授受' },
+      { q: '"V-てある"和"V-ている"的区别？', opts: ['无区别', 'てある=自然状态·ている=人为', 'てある=人为准备·ている=自然状态', 'てある=过去·ている=现在'], ans: 2, hint: '窓が開いている(自然) vs 窓が開けてある(有人故意)', label: '体·てある' },
+      { q: '"食べてみる"表示什么？', opts: ['吃完了', '正在吃', '试着吃', '被迫吃'], ans: 2, hint: 'V-てみる=尝试体', label: '体·てみる' },
+      { q: '"準備しておく"表示什么？', opts: ['正在准备', '预先准备', '刚准备完', '被迫准备'], ans: 1, hint: 'V-ておく=准备体,预先做某事', label: '体·ておく' },
+      { q: '"寒くなってきた"的"てくる"表示什么？', opts: ['空间移动', '从过去到现在的变化', '从现在到将来', '尝试'], ans: 1, hint: '时间上: てくる=从过去到现在', label: '体·てくる' },
+      { q: '日语的时态系统是怎样的？', opts: ['过去·现在·未来', '过去 vs 非过去', '只有现在时', '只有过去时'], ans: 1, hint: '非过去形可表现现在和未来', label: '时态概念' },
+      { q: '"V-ておく"的口语缩约形是？', opts: ['〜ちゃう', '〜とく', '〜てる', '〜じゃう'], ans: 1, hint: '準備しておく→準備しとく', label: '体·缩约' },
+      { q: '「ようだ」和「らしい」的区别？', opts: ['完全一样', 'ようだ=客观·らしい=主观', 'ようだ=主观感觉·らしい=客观根据', 'らしい更礼貌'], ans: 2, hint: 'ようだ=我的感觉,らしい=客观迹象', label: '助动词辨析' },
+      { q: '"おいしそうだ"的"そうだ"是什么？', opts: ['传闻', '样态', '推量', '比况'], ans: 1, hint: '接ます形/词干=样态(看起来~)', label: '助动词辨析' },
+      { q: '"おいしいそうだ"的"そうだ"是什么？', opts: ['样态', '传闻', '推量', '比况'], ans: 1, hint: '接终止形=传闻(听说~)', label: '助动词辨析' },
+      { q: '使役被动态「V-させられる」表示什么？', opts: ['让某人做', '被某人做', '被迫做/不得不做', '能做'], ans: 2, hint: '使役+被动=被迫', label: '态·使役被动' },
+    ],
+    w5: [ // Sentence Patterns (句型) - 18 Qs
+      { q: '表示"必须"的最常用句型是？', opts: ['V-てもいい', 'V-てはいけない', 'V-なければならない', 'V-たい'], ans: 2, hint: '不…的话就不成→必须', label: '句型·义务' },
+      { q: '表示"可以做"的句型是？', opts: ['V-てはいけない', 'V-てもいい', 'V-なければならない', 'V-たい'], ans: 1, hint: '即使…也好→可以做', label: '句型·许可' },
+      { q: '表示"不能做"的句型是？', opts: ['V-てもいい', 'V-てはいけない', 'V-なくてもいい', 'V-たい'], ans: 1, hint: 'ては+いけない=做了不行→禁止', label: '句型·禁止' },
+      { q: '"V-たい"和"V-たがる"的区别？', opts: ['无区别', 'たい=第一人称·たがる=第三人称', 'たい=过去·たがる=现在', 'たい更礼貌'], ans: 1, hint: '我想做→たい, 他想做→たがる', label: '句型·愿望' },
+      { q: '最礼貌的命令/请求形式是？', opts: ['V-命令形', 'V-てください', 'おV-ください', 'V-なさい'], ans: 2, hint: '敬语命令形', label: '句型·命令' },
+      { q: '最粗鲁的命令形式是？', opts: ['V-てください', 'V-なさい', 'V-命令形', 'おV-ください'], ans: 2, hint: '書け·食べろ·しろ=直接命令', label: '句型·命令' },
+      { q: '"V-ないでください"表示什么？', opts: ['请做', '请不要做', '必须做', '可以做'], ans: 1, hint: '否定+请求=请不要…', label: '句型·禁止' },
+      { q: '"V-なくてもいい"表示什么？', opts: ['必须做', '可以做', '不做也可以', '不能做'], ans: 2, hint: '否定+てもいい=即使不…也好', label: '句型·许可' },
+      { q: '"V-ようと思う"表示什么？', opts: ['正在做', '打算做', '被迫做', '禁止做'], ans: 1, hint: '意志形+と思う=打算', label: '句型·意志' },
+      { q: '"V-ないといけない"是哪个表达的更口语化版本？', opts: ['V-てもいい', 'V-なければならない', 'V-たい', 'V-てはいけない'], ans: 1, hint: '日常对话中最自然的"必须"表达', label: '句型·义务' },
+      { q: '"雨が降りそうだ"的"そうだ"是？', opts: ['传闻', '样态', '推量', '比况'], ans: 1, hint: '接ます形=样态(看起来要下)', label: '助动词·样态' },
+      { q: '形式名词中表示"事情/抽象概念"的是？', opts: ['の', 'こと', 'もの', 'はず'], ans: 1, hint: '勉強することが大事だ', label: '形式名词' },
+      { q: '形式名词中表示"具体/感官"的是？', opts: ['の', 'こと', 'もの', 'はず'], ans: 0, hint: '星が見えるのが好きだ', label: '形式名词' },
+      { q: '"V-なければならない"在口语中常缩略为什么？', opts: ['〜なきゃ', '〜なちゃ', '〜なけりゃ', '〜なか'], ans: 0, hint: '行かなければ→行かなきゃ', label: '句型·缩约' },
+      { q: '敬语中，尊敬语的典型形式是？', opts: ['おV-する', 'おV-になる', 'V-させる', 'V-れる'], ans: 1, hint: 'お読みになる=尊敬(抬高对方)', label: '敬语' },
+      { q: '敬语中，谦让语的典型形式是？', opts: ['おV-になる', 'おV-する', 'V-られる', 'V-させる'], ans: 1, hint: 'お持ちする=谦让(降低自己)', label: '敬语' },
+      { q: '"N-がほしい"表示什么？', opts: ['想要某物', '想做某事', '喜欢某物', '讨厌某物'], ans: 0, hint: 'ほしい=想要(第一人称)', label: '句型·愿望' },
+      { q: '"V-てもかまわない"表示什么？', opts: ['不可以', '没关系/可以', '必须', '禁止'], ans: 1, hint: 'かまわない=不介意→做也可以', label: '句型·许可' },
+    ]
+  };
+
+  // ========== PROLOGUE & ENDING SCRIPTS ==========
+  const PROLOGUE_SCRIPT = [
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '……よく来たね、勇者よ。', zh: '……你来得正好，勇者啊。' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: 'この世界の言葉が、今、壊れかけている……', zh: '这个世界的言语，如今正在崩坏之中……' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '「文法の闇」と呼ばれる現象だ。', zh: '这被称为"文法之暗"的现象。' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '名詞が形を失い、動詞が活用を忘れ……', zh: '名词失去形态，动词忘记活用……' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '助詞が迷子になり、時制が歪んで……', zh: '助词变成迷途之子，时态发生歪斜……' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: 'やがて、人の想いが伝わらなくなる。', zh: '终有一日，人的思念将无法传达。' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '君には、この「文法大陸」を救ってほしい。', zh: '我希望你能拯救这个"文法大陆"。' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '五つの地域を巡り、忘れられた文法を取り戻してくれ。', zh: '巡游五片地域，取回被遗忘的文法吧。' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: 'まずは「品詞」からだ。……言葉の土台だからね。', zh: '首先从"词类"开始吧。……那是言语的基石。' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: 'さあ、行こう。……言葉は、君の武器だ。', zh: '来吧，出发吧。……言语，就是你的武器。' }
+  ];
+
+  const ENDING_SCRIPT = [
+    { speaker: '文法の魔王', icon: '👹', jp: '……ぐ、うう……。', zh: '……呜、呜呜……。' },
+    { speaker: '文法の魔王', icon: '👹', jp: '……あんなはずは……なかった。', zh: '……不该是这样的……' },
+    { speaker: '文法の魔王', icon: '👹', jp: '私の「文法の闇」が、砕けるなんて……', zh: '我的"文法之暗"，竟然会被打破……' },
+    { speaker: '勇者', icon: '🧑‍🎓', jp: '……君は、何を恐れていたんだ？', zh: '……你，到底在害怕什么？' },
+    { speaker: '文法の魔王', icon: '👹', jp: '……文法が、難しすぎるからだ。', zh: '……因为文法，太难了。' },
+    { speaker: '文法の魔王', icon: '👹', jp: '誰もが間違える。……間違えると、悔しい。', zh: '所有人都会犯错。……一犯错，就会懊悔。' },
+    { speaker: '文法の魔王', icon: '👹', jp: 'だから、全部忘れてしまえば——痛くない。', zh: '所以，只要全部忘记——就不会痛了。' },
+    { speaker: '勇者', icon: '🧑‍🎓', jp: '……違うよ。', zh: '……不对哦。' },
+    { speaker: '勇者', icon: '🧑‍🎓', jp: '文法は、君が思うほど冷たいものじゃない。', zh: '文法，并不是你想像中那么冰冷的东西。' },
+    { speaker: '勇者', icon: '🧑‍🎓', jp: 'ルールがあるからこそ、人の想いは正しく伝わる。', zh: '正因为有了规则，人的思念才能正确传达。' },
+    { speaker: '後悔の語り部', icon: '🧙‍♂️', jp: '……ああ。僕が間違っていたんだ。', zh: '……啊啊。是我错了。' },
+    { speaker: '後悔の語り部', icon: '🧙‍♂️', jp: '文法を消せば、痛みも消えると思った。', zh: '我以为只要消去文法，痛苦也会消失。' },
+    { speaker: '後悔の語り部', icon: '🧙‍♂️', jp: 'でも、伝わらない痛みの方が、もっと深かった……', zh: '可是，无法传达的痛苦，更加深刻……' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '……よくやった、勇者よ。', zh: '……做得好，勇者啊。' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '文法大陸が、息を吹き返した。……でも、これで終わりじゃない。', zh: '文法大陆，重新呼吸了。……不过，这并不是结束。' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '言葉の旅は、一生続くものなんだよ。', zh: '言语的旅程，是持续一生的东西哦。' },
+    { speaker: '老賢者・言霊', icon: '🧙', jp: '……また、会えることを願っているよ。', zh: '……我祈愿着，还能再次相见。' }
+  ];
+
+  // ========== BOSS DIALOGUE SCRIPTS ==========
+  var BOSS_DIALOGUES = {
+    w1boss: [
+      { speaker: '品词の守护者', icon: '🐉', jp: '……よく来たな、小さき勇者よ。', zh: '……终于来了啊，小小的勇者。' },
+      { speaker: '品词の守护者', icon: '🐉', jp: '私は品詞の守護者。全ての言葉の分類を司る者だ。', zh: '我是词类的守护者。掌管一切言语分类之人。' },
+      { speaker: '品词の守护者', icon: '🐉', jp: 'お前は、「ことば」を正しく分類できるか？', zh: '你能正确地分类"语词"吗？' },
+      { speaker: '语法勇者', icon: '🧑‍🎓', jp: '名詞、動詞、形容詞……言葉の根っこを見極めてみせる！', zh: '名词、动词、形容词……我会看穿言语的根基！' }
+    ],
+    w2boss: [
+      { speaker: '活用の魔术师', icon: '🐉', jp: 'フフフ……登ってきたか、この山を。', zh: '呵呵呵……爬上来了啊，这座山。' },
+      { speaker: '活用の魔术师', icon: '🐉', jp: '言葉は生きている。形を変え、時を超え……', zh: '言语是活的。变换形态，跨越时空……' },
+      { speaker: '活用の魔术师', icon: '🐉', jp: '君は、その変幻自在の姿を捕まえられるか？', zh: '你能抓住那变幻自在的姿态吗？' },
+      { speaker: '语法勇者', icon: '🧑‍🎓', jp: 'て形も、た形も、ない形も——全部身につけてきた！', zh: 'て形、た形、ない形——我全都掌握了！' }
+    ],
+    w3boss: [
+      { speaker: '格助词の龙', icon: '🐉', jp: 'グオオ……我が洞窟に踏み込むとは、愚かな。', zh: '咕喔喔……踏入我的洞窟，真是愚蠢。' },
+      { speaker: '格助词の龙', icon: '🐉', jp: '助詞一つの間違いで、文の意味はひっくり返る……', zh: '一个助词的错误，就能让句子的意思完全颠倒……' },
+      { speaker: '格助词の龙', icon: '🐉', jp: 'お前の「が」と「は」の違いは、本物か？', zh: '你的"が"和"は"的区分，是真的吗？' },
+      { speaker: '语法勇者', icon: '🧑‍🎓', jp: 'がは主語、はは主題——その使い分け、見せてやる！', zh: 'が是主语、は是主题——我来展示给你看！' }
+    ],
+    w4boss: [
+      { speaker: '时空の支配者', icon: '🐉', jp: '……ようこそ、時の迷宮へ。', zh: '……欢迎来到，时间的迷宫。' },
+      { speaker: '时空の支配者', icon: '🐉', jp: '過去・現在・未来。ている・てある・てしまう……', zh: '过去·现在·未来。ている·てある·てしまう……' },
+      { speaker: '时空の支配者', icon: '🐉', jp: '時間の流れそのものを捻じ曲げてやろう。', zh: '我要扭曲时间之流本身。' },
+      { speaker: '语法勇者', icon: '🧑‍🎓', jp: '时の流れが歪んでも——私は「今」を掴む！', zh: '即使时间之流扭曲——我也要抓住"现在"！' }
+    ],
+    w5boss: [
+      { speaker: '文法の魔王', icon: '👹', jp: '…………来たか。', zh: '…………来了啊。' },
+      { speaker: '文法の魔王', icon: '👹', jp: '私は、この世界の「難しさ」そのものだ。', zh: '我，就是这个世界的"困难"本身。' },
+      { speaker: '文法の魔王', icon: '👹', jp: '命令、禁止、義務、許可……人はみな、縛られることを嫌う。', zh: '命令、禁止、义务、许可……人们都讨厌被束缚。' },
+      { speaker: '文法の魔王', icon: '👹', jp: '……それでも、戦うか？', zh: '……即便如此，你还要战斗吗？' },
+      { speaker: '语法勇者', icon: '🧑‍🎓', jp: 'ルールがあるからこそ、想いは届くんだ！', zh: '正因为有了规则，思念才能传达到！' }
+    ]
+  };
+
+  function showBossDialogue(stage, callback) {
+    var lines = BOSS_DIALOGUES[stage.id];
+    if (!lines || lines.length === 0) { callback(); return; }
+    
+    var overlay = document.getElementById('artifactOverlay');
+    var panel = document.getElementById('artifactPanel');
+    overlay.style.display = 'flex';
+    
+    var dialogueIdx = 0;
+    
+    function renderDialogueLine() {
+      if (dialogueIdx >= lines.length) {
+        // Dialogue complete, begin battle
+        overlay.style.display = 'none';
+        callback();
+        return;
+      }
+      var line = lines[dialogueIdx];
+      var textId = 'boss-dialogue-' + dialogueIdx;
+      var html = '';
+      html += '<h3 style="font-size:1.1rem">' + line.icon + ' ' + line.speaker + '</h3>';
+      html += '<div style="font-size:1.05em;line-height:1.8;padding:12px 0;color:var(--text)">';
+      html += line.jp + ' ';
+      html += createTranslationButton(line.jp, line.zh, textId);
+      html += '</div>';
+      html += '<button class="btn btn-primary btn-sm" id="btnBossNext">次へ →</button>';
+      
+      panel.innerHTML = html;
+      
+      document.getElementById('btnBossNext').addEventListener('click', function() {
+        dialogueIdx++;
+        renderDialogueLine();
+      });
+    }
+    
+    renderDialogueLine();
+  }
+
+  // ========== GAME STATE ==========
+  const DEFAULT_STATE = {
+    playerHp: 100, maxHp: 100,
+    coins: 50,
+    score: 0,
+    level: 1,
+    combo: 0, bestCombo: 0,
+    totalCorrect: 0, totalWrong: 0,
+    unlockedWorlds: ['w1'],
+    completedStages: {},
+    currentWorld: null,
+    items: { hint: 1, heal: 0, critical: 0 },
+    wrongAnswers: [],
+    recentQuestions: {},  // { worldId: [qi, qi, ...] } - last N used
+    talents: {},          // { talentId: level }
+    runArtifacts: [],     // [{ id, name, icon, desc, rarity, effect }]
+    runPath: null         // current world path nodes
+  };
+
+  let state = loadState();
+  let battleState = null;
+  let usedQuestions = [];
+
+  function loadState() {
+    try {
+      var s = localStorage.getItem('grammar-game');
+      if (s) {
+        var parsed = JSON.parse(s);
+        return Object.assign({}, DEFAULT_STATE, parsed);
+      }
+    } catch(e) {}
+    return Object.assign({}, DEFAULT_STATE);
+  }
+
+  function saveState() {
+    try { localStorage.setItem('grammar-game', JSON.stringify(state)); } catch(e) {}
+  }
+
+  function resetState() {
+    state = Object.assign({}, DEFAULT_STATE);
+    saveState();
+  }
+
+  // ========== ROGUELIKE DATA ==========
+  // Talent Tree
+  const TALENTS = [
+    { id: 'hp', name: '生命力', icon: '❤️', color: '#E24B4A', desc: '最大HP增加', levels: [40,80,150,300,500], vals: [10,15,20,25,30], getEffect: function(lv) { return '+' + this.vals.slice(0,lv).reduce(function(a,b){return a+b;},0) + ' HP'; } },
+    { id: 'combo_start', name: '连击精通', icon: '⛓️', color: '#EF9F27', desc: '每关开始时的连击数', levels: [30,60,150,350,800], vals: [1,2,3,4,5], getEffect: function(lv) { return '开局连击=' + (lv > 0 ? this.vals[lv-1] : 0); } },
+    { id: 'crit', name: '暴击强化', icon: '💥', color: '#D4537E', desc: '降低暴击触发阈值', levels: [80,200,400], vals: [5,4,3], getEffect: function(lv) { return '连击≥' + (this.vals[lv-1] || 5) + '即暴击'; } },
+    { id: 'start_items', name: '起始道具', icon: '🛡️', color: '#378ADD', desc: '每局开局获得额外道具', levels: [60,150,350], vals: [1,2,3], getEffect: function(lv) { return '开局+'+lv+' 提示卷轴'; } },
+    { id: 'gold_bonus', name: '金运', icon: '💰', color: '#BA7517', desc: '每题获得金币增加', levels: [120,250,400], vals: [20,40,60], getEffect: function(lv) { return '+'+this.vals[lv-1]+'% 金币'; } }
+  ];
+
+  function getTalentLevel(id) { return state.talents[id] || 0; }
+  function getTalentMax(id) { var t = TALENTS.find(function(x){return x.id===id;}); return t ? t.levels.length : 0; }
+
+  function applyTalentEffects() {
+    var tl = getTalentLevel('combo_start');
+    if (tl > 0) state.combo = TALENTS.find(function(t){return t.id==='combo_start';}).vals[tl-1];
+    var tl2 = getTalentLevel('hp');
+    if (tl2 > 0) {
+      var bonus = TALENTS.find(function(t){return t.id==='hp';}).vals.slice(0,tl2).reduce(function(a,b){return a+b;},0);
+      state.maxHp = 100 + bonus;
+    }
+  }
+
+  // Artifact Pool: 12 artifacts (6 common, 4 rare, 2 legendary)
+  const ARTIFACTS = [
+    // Common (weight 3)
+    { id: 'shield', name: '语法の盾', icon: '🛡️', rarity: 'common', desc: '每关第一道错题不扣血', effect: 'shield' },
+    { id: 'gold_bell', name: '金运の铃', icon: '🔔', rarity: 'common', desc: '每题额外+5金币', effect: 'gold_bonus' },
+    { id: 'combo_book', name: '连击の书', icon: '📖', rarity: 'common', desc: '基础伤害+3', effect: 'dmg_bonus' },
+    { id: 'first_eye', name: '先制の眼', icon: '👁️', rarity: 'common', desc: '每关第一题显示答案', effect: 'first_auto' },
+    { id: 'heal_stone', name: '回复の石', icon: '💚', rarity: 'common', desc: '每通关一关回复10HP', effect: 'stage_heal' },
+    { id: 'particle_amulet', name: '助词の加护', icon: '📿', rarity: 'common', desc: '格助词题伤害+8', effect: 'particle_dmg' },
+    // Rare (weight 2)
+    { id: 'regen_ring', name: '再生の指輪', icon: '💍', rarity: 'rare', desc: '答错后回复5HP', effect: 'regen_on_wrong' },
+    { id: 'fury_horn', name: '猛攻の角', icon: '📯', rarity: 'rare', desc: '20%概率双倍伤害', effect: 'fury_chance' },
+    { id: 'class_mastery', name: '词类の极意', icon: '📜', rarity: 'rare', desc: '词类判断题伤害+12', effect: 'class_dmg' },
+    { id: 'shop_discount', name: '商店割引', icon: '🏷️', rarity: 'rare', desc: '商店物品打7折', effect: 'discount' },
+    // Legendary (weight 1)
+    { id: 'crit_jewel', name: '暴击の宝玉', icon: '💎', rarity: 'legendary', desc: '连击≥3即暴击', effect: 'crit_low' },
+    { id: 'immortal_soul', name: '不死の魂', icon: '🔥', rarity: 'legendary', desc: '死亡时HP回1并继续(1次)', effect: 'immortal' }
+  ];
+
+  function pickArtifactChoices(hardBonus) {
+    var pool = ARTIFACTS.slice();
+    var choices = [];
+    var weights = { common: 3, rare: 2, legendary: 1 };
+    if (hardBonus) { weights.rare += 1; weights.legendary += 1; }
+    var totalW = pool.reduce(function(a,x){return a+weights[x.rarity];},0);
+
+    for (var n = 0; n < 3; n++) {
+      var r = Math.random() * totalW;
+      var acc = 0;
+      var pick = null;
+      for (var i = 0; i < pool.length; i++) {
+        acc += weights[pool[i].rarity];
+        if (r <= acc) { pick = pool[i]; break; }
+      }
+      if (pick) {
+        choices.push(pick);
+        totalW -= weights[pick.rarity];
+        pool = pool.filter(function(a){return a.id!==pick.id;});
+        weights[pick.rarity] = 0;
+      }
+    }
+    return choices;
+  }
+
+  // Enemy Modifiers (for Hard nodes)
+  const MODIFIERS = [
+    { id: 'iron', name: '铁壁', icon: '🛡️', desc: '受伤-30%', apply: function(s) { s.hp = Math.floor(s.hp * 1.0); return function(d){return Math.floor(d*0.7);}; } },
+    { id: 'fury', name: '狂暴', icon: '😤', desc: '伤害+30% 金币+50%', apply: function(s) { s.damage = Math.floor(s.damage * 1.3); s.goldMult = 1.5; return function(d){return d;}; } },
+    { id: 'regen', name: '再生', icon: '🌿', desc: '每题回复15HP', apply: function(s) { s.regen = 15; return function(d){return d;}; } },
+    { id: 'slow', name: '迟缓', icon: '🐌', desc: 'HP+40% 伤害-20%', apply: function(s) { s.hp = Math.floor(s.hp * 1.4); s.damage = Math.floor(s.damage * 0.8); return function(d){return d;}; } }
+  ];
+
+  // Mystery Events
+  const MYSTERY_EVENTS = [
+    { name: '宝箱発見！', icon: '🎁', desc: '你发现了一个宝箱！', effect: function() { var g = 40 + Math.floor(Math.random()*41); state.coins += g; return '+'+g+' 金币'; } },
+    { name: '温泉休息', icon: '♨️', desc: '你找到了温泉。', effect: function() { var h = 30; state.playerHp = Math.min(state.maxHp, state.playerHp + h); return '+'+h+' HP'; } },
+    { name: '贤者の教え', icon: '🧙‍♂️', desc: '贤者赐予你力量。', effect: function() { var free = pickArtifactChoices(false)[0]; state.runArtifacts.push(free); return '获得遗物：'+free.name; } },
+    { name: '落とし穴！', icon: '🕳️', desc: '你掉进了陷阱！', effect: function() { var d = 15; state.playerHp = Math.max(0, state.playerHp - d); return '-'+d+' HP'; } },
+    { name: '盗贼出现！', icon: '🦹', desc: '盗贼偷走了金币！', effect: function() { var g = 15 + Math.floor(Math.random()*16); state.coins = Math.max(0, state.coins - g); return '-'+g+' 金币'; } },
+    { name: '呪いの部屋', icon: '💀', desc: '你被诅咒了！', effect: function() { state._cursedStage = true; return '下一场战斗受伤×1.5'; } }
+  ];
+
+  // Skill Cards (P3: Combat Depth)
+  var SKILLS = [
+    { id: 'precise', name: '精准一击', icon: '🎯', desc: '下一题伤害×2' },
+    { id: 'shield', name: '铁壁防御', icon: '🛡️', desc: '下一题答错不受伤害' },
+    { id: 'gold_rain', name: '金币雨', icon: '💰', desc: '下一题金币×3' },
+    { id: 'quick_think', name: '快速思考', icon: '⚡', desc: '立即显示提示+保留连击' },
+    { id: 'reroll', name: '洗牌', icon: '🔄', desc: '更换所有错误选项' },
+    { id: 'time_stop', name: '时间停止', icon: '⏳', desc: '答错后跳过敌人回合' }
+  ];
+
+  function shuffleArray(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function drawBattleSkills() {
+    return shuffleArray(SKILLS).slice(0, 3);
+  }
+
+  // ========== DOM ==========
+  var screens = {
+    title: document.getElementById('titleScreen'),
+    map: document.getElementById('mapScreen'),
+    battle: document.getElementById('battleScreen'),
+    result: document.getElementById('resultScreen'),
+    shop: document.getElementById('shopScreen'),
+    review: document.getElementById('reviewScreen'),
+    talent: document.getElementById('talentScreen'),
+    path: document.getElementById('pathScreen')
+  };
+
+  function showScreen(name) {
+    Object.keys(screens).forEach(function(k) { screens[k].classList.remove('active'); });
+    screens[name].classList.add('active');
+  }
+
+  // ========== TRANSLATION BUTTON ==========
+  function toggleTranslation(btn) {
+    var targetId = btn.getAttribute('data-target');
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    if (target.classList.contains('show')) {
+      target.classList.remove('show');
+      btn.textContent = '日';
+    } else {
+      target.classList.add('show');
+      btn.textContent = '中';
+    }
+  }
+  // Expose to global scope for inline onclick handlers
+  window.toggleTranslation = toggleTranslation;
+
+  function createTranslationButton(japaneseText, chineseText, containerId) {
+    var textId = 'trans-' + (containerId || 't' + Math.random().toString(36).substr(2, 5));
+
+    var html = '';
+    html += '<button class="translation-btn" data-target="' + textId + '" onclick="toggleTranslation(this)" title="显示/隐藏中文翻译">日</button>';
+    html += '<div class="translation-text" id="' + textId + '">' + chineseText + '</div>';
+
+    return html;
+  }
+
+  // ========== PROLOGUE & ENDING ==========
+  let prologueIdx = 0;
+  let endingIdx = 0;
+
+  function showPrologue() {
+    prologueIdx = 0;
+    screens.title.classList.remove('active');
+    document.getElementById('prologueScreen').style.display = 'flex';
+    advancePrologue();
+  }
+
+  function advancePrologue() {
+    var scr = PROLOGUE_SCRIPT;
+    if (prologueIdx >= scr.length) {
+      // End of prologue, start game
+      document.getElementById('prologueScreen').style.display = 'none';
+      showMap();
+      return;
+    }
+    var line = scr[prologueIdx];
+    var html = '';
+    html += '<div class="npc-name">' + line.icon + ' ' + line.speaker + '</div>';
+    html += '<div>' + line.jp + ' ';
+    html += createTranslationButton(line.jp, line.zh, 'prologue-trans-' + prologueIdx);
+    html += '</div>';
+    document.getElementById('prologueText').innerHTML = html;
+    var btn = document.getElementById('btnStartPrologue');
+    btn.textContent = (prologueIdx < scr.length - 1) ? '次へ →' : '冒険開始！';
+    btn.onclick = function() { advancePrologue(); };
+    prologueIdx++;
+  }
+
+  function skipPrologue() {
+    document.getElementById('prologueScreen').style.display = 'none';
+    showMap();
+  }
+  window.skipPrologue = skipPrologue;
+
+  function showEnding() {
+    endingIdx = 0;
+    // Hide all screens
+    Object.keys(screens).forEach(function(k) { screens[k].classList.remove('active'); });
+    document.getElementById('endingScreen').style.display = 'flex';
+    advanceEnding();
+  }
+
+  function advanceEnding() {
+    var scr = ENDING_SCRIPT;
+    if (endingIdx >= scr.length) {
+      // End of ending
+      document.getElementById('btnRestart').textContent = 'もう一度 (再来一次)';
+      document.getElementById('btnRestart').onclick = function() { location.reload(); };
+      return;
+    }
+    var line = scr[endingIdx];
+    var html = '';
+    html += '<div class="npc-name">' + (line.icon || '') + ' ' + line.speaker + '</div>';
+    html += '<div>' + line.jp + ' ';
+    html += createTranslationButton(line.jp, line.zh, 'ending-trans-' + endingIdx);
+    html += '</div>';
+    document.getElementById('endingText').innerHTML = html;
+    var btn = document.getElementById('btnRestart');
+    btn.textContent = (endingIdx < scr.length - 1) ? '次へ →' : 'もう一度 (再来一次)';
+    btn.onclick = function() { advanceEnding(); };
+    endingIdx++;
+  }
+
+  // ========== TOAST ==========
+  var toastTimer;
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2000);
+  }
+
+  // ========== PARTICLES ==========
+  function spawnParticles(x, y, color) {
+    var container = document.getElementById('particles');
+    for (var i = 0; i < 12; i++) {
+      var p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = x + 'px';
+      p.style.top = y + 'px';
+      p.style.background = color;
+      p.style.setProperty('--px', (Math.random() - .5) * 120 + 'px');
+      p.style.setProperty('--py', (Math.random() - .5) * 120 - 40 + 'px');
+      container.appendChild(p);
+      setTimeout(function() { p.remove(); }, 800);
+    }
+  }
+
+  // ========== Optimization 2: Float Damage & Shake ==========
+  function floatDamage(x, y, text, cls) {
+    var el = document.createElement('div');
+    el.className = 'float-dmg' + (cls ? ' ' + cls : '');
+    el.textContent = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    document.body.appendChild(el);
+    setTimeout(function() { el.remove(); }, 900);
+  }
+
+  function triggerShake() {
+    var container = document.getElementById('gameContainer');
+    container.classList.add('shake');
+    setTimeout(function() { container.classList.remove('shake'); }, 400);
+  }
+
+  // ========== TITLE SCREEN ==========
+  function initTitle() {
+    showScreen('title');
+    var hasSave = localStorage.getItem('grammar-game');
+    document.getElementById('btnContinue').style.display = hasSave ? 'inline-flex' : 'none';
+  }
+
+  document.getElementById('btnStart').addEventListener('click', function() {
+    if (!localStorage.getItem('grammar-game')) resetState();
+    else state = loadState();
+    showPrologue(); // 显示序章而不是立即显示地图
+  });
+
+  document.getElementById('btnContinue').addEventListener('click', function() {
+    state = loadState();
+    showMap();
+  });
+
+  document.getElementById('btnReset').addEventListener('click', function() {
+    if (confirm('确定要开始新游戏吗？当前进度将丢失。')) {
+      resetState();
+      document.getElementById('btnContinue').style.display = 'none';
+      showToast('🔄 新游戏已开始！');
+    }
+  });
+
+  document.getElementById('btnTheme').addEventListener('click', function() {
+    var d = document.documentElement;
+    var isDark = d.getAttribute('data-theme') === 'dark';
+    d.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    try { localStorage.setItem('grammar-theme', isDark ? 'light' : 'dark'); } catch(e) {}
+  });
+
+  // Init theme
+  (function() {
+    try {
+      var t = localStorage.getItem('grammar-theme');
+      if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    } catch(e) {}
+  })();
+
+  // ========== MAP SCREEN ==========
+  function showMap() {
+    showScreen('map');
+    document.getElementById('mapLevel').textContent = 'Lv.' + state.level;
+    document.getElementById('mapScore').textContent = state.score;
+
+    var list = document.getElementById('worldList');
+    list.innerHTML = '';
+
+    WORLDS.forEach(function(w, wi) {
+      var locked = state.unlockedWorlds.indexOf(w.id) === -1;
+      var completedStages = w.stages.filter(function(s) { return state.completedStages[s.id]; }).length;
+      var totalStages = w.stages.length;
+      var allDone = completedStages === totalStages;
+      var progressPct = Math.round((completedStages / totalStages) * 100);
+
+      var card = document.createElement('div');
+      card.className = 'world-card';
+      if (locked) card.classList.add('locked');
+      if (allDone) card.classList.add('completed');
+
+      card.innerHTML =
+        '<div class="world-icon" style="background:' + w.color + '">' + w.icon + '</div>' +
+        '<div class="world-body">' +
+          '<div class="world-name">' + w.name + '</div>' +
+          '<div class="world-desc">' + w.desc + '</div>' +
+          '<div class="world-progress">' + completedStages + '/' + totalStages + ' 关卡</div>' +
+          '<div class="world-progress-bar"><div class="world-progress-fill" style="width:' + progressPct + '%;background:' + w.color + '"></div></div>' +
+        '</div>';
+
+      if (!locked) {
+        card.addEventListener('click', function() { enterWorld(w); });
+      }
+      list.appendChild(card);
+    });
+  }
+  window.showMap = showMap;
+
+  function enterWorld(world) {
+    state.currentWorld = world.id;
+    state.runArtifacts = [];
+    state.runPath = null;
+    state._cursedStage = false;
+    applyTalentEffects();
+    // Give starting items from talent
+    var siLv = getTalentLevel('start_items');
+    if (siLv > 0) state.items.hint = (state.items.hint || 0) + siLv;
+    saveState();
+    showPathMap(world);
+  }
+
+  // ========== ROGUELIKE: PATH MAP ==========
+  function generatePath(world) {
+    var stages = world.stages;
+    var boss = stages[stages.length - 1]; // boss is last
+    var normal = stages.filter(function(s) { return !s.boss; });
+
+    // Build 3 layers + boss
+    var path = { layers: [], boss: null, world: world };
+    var layerSizes = [2, 3, 2]; // layer 1: 2 nodes, layer 2: 3 nodes, layer 3: 2 nodes
+
+    // World difficulty scaling for path generation
+    var worldIdx = WORLDS.findIndex(function(w) { return w.id === world.id; });
+    var diffScale = worldIdx; // 0~4
+    var easyChance = 0.40 - diffScale * 0.05;     // w1:40% → w5:20%
+    var hardChance = 0.25 + diffScale * 0.04;     // w1:25% → w5:41%
+    var mysteryChance = 0.18 + diffScale * 0.01;   // w1:18% → w5:22%
+    // shop fills the rest
+
+    var shuffled = normal.slice().sort(function() { return Math.random() - .5; });
+    var idx = 0;
+
+    for (var l = 0; l < layerSizes.length; l++) {
+      var layer = [];
+      for (var n = 0; n < layerSizes[l]; n++) {
+        if (idx >= shuffled.length) break;
+        var stage = shuffled[idx++];
+        // Assign node type with world-dependent probabilities
+        var nodeType;
+        var r = Math.random();
+        if (r < easyChance) nodeType = 'easy';
+        else if (r < easyChance + hardChance) nodeType = 'hard';
+        else if (r < easyChance + hardChance + mysteryChance) nodeType = 'mystery';
+        else nodeType = 'shop';
+
+        var node = {
+          type: nodeType,
+          stage: stage,
+          id: 'pn_' + l + '_' + n,
+          done: false,
+          taken: false
+        };
+
+        // Hard nodes get a random modifier
+        if (nodeType === 'hard') {
+          node.modifier = MODIFIERS[Math.floor(Math.random() * MODIFIERS.length)];
+        }
+
+        layer.push(node);
+      }
+      if (layer.length > 0) path.layers.push(layer);
+    }
+    path.boss = { type: 'boss', stage: boss, id: 'pn_boss', done: false, taken: false };
+    return path;
+  }
+
+  function showPathMap(world) {
+    showScreen('path');
+    if (!state.runPath || state.runPath.world.id !== world.id) {
+      state.runPath = generatePath(world);
+    }
+
+    document.getElementById('pathWorldName').textContent = world.icon + ' ' + world.name;
+    document.getElementById('pathHp').textContent = state.playerHp + '/' + state.maxHp;
+
+    var mapEl = document.getElementById('pathMap');
+    mapEl.innerHTML = '';
+
+    var path = state.runPath;
+
+    // Show current artifacts
+    if (state.runArtifacts.length > 0) {
+      var artBar = document.createElement('div');
+      artBar.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:0 0 8px';
+      artBar.innerHTML = '<span style="font-size:.72em;color:var(--text3)">遗物: </span>';
+      state.runArtifacts.forEach(function(a) {
+        var tag = document.createElement('span');
+        tag.style.cssText = 'padding:2px 8px;border-radius:10px;font-size:.7em;font-weight:600;background:var(--card);border:1px solid var(--border);color:var(--' + (a.rarity==='legendary'?'warning':a.rarity==='rare'?'accent':'text2') + ')';
+        tag.textContent = a.icon + ' ' + a.name;
+        artBar.appendChild(tag);
+      });
+      mapEl.appendChild(artBar);
+    }
+
+    // Render layers + boss
+    var allLayers = path.layers.concat([[path.boss]]);
+    allLayers.forEach(function(layer) {
+      var row = document.createElement('div');
+      row.className = 'path-layer';
+      layer.forEach(function(node) {
+        var btn = document.createElement('div');
+        btn.className = 'path-node type-' + node.type;
+        if (node.done) btn.classList.add('done');
+        if (node.taken) btn.classList.add('taken');
+
+        var typeEmoji = { easy: '🟢', hard: '🟠', mystery: '🔵', shop: '🏪', boss: '👹' };
+        btn.innerHTML =
+          '<span class="pn-icon">' + (node.stage ? node.stage.eicon : typeEmoji[node.type]) + '</span>' +
+          '<span class="pn-name">' + (node.type === 'boss' ? 'BOSS' : node.stage ? node.stage.name : node.type) + '</span>';
+
+        if (node.modifier) {
+          btn.innerHTML += '<span class="pn-mod">' + node.modifier.icon + ' ' + node.modifier.name + '</span>';
+        }
+
+        if (node.type === 'mystery') {
+          btn.innerHTML += '<span class="pn-meta">???</span>';
+        } else if (node.type === 'shop') {
+          btn.innerHTML += '<span class="pn-meta">🏪</span>';
+        } else if (node.stage && !node.done) {
+          btn.innerHTML += '<span class="pn-meta">HP:' + (node.stage.hp || '?') + ' Q:' + (node.stage.questions || '?') + '</span>';
+        }
+
+        if (!node.done && !node.taken) {
+          btn.addEventListener('click', function() { handlePathNode(node); });
+        }
+        row.appendChild(btn);
+      });
+      mapEl.appendChild(row);
+
+      // Add connector between layers (skip after boss)
+      if (layer !== allLayers[allLayers.length - 1]) {
+        var conn = document.createElement('div');
+        conn.style.cssText = 'font-size:1.2em;color:var(--text3);text-align:center;padding:2px 0';
+        conn.textContent = '⬇';
+        mapEl.appendChild(conn);
+      }
+    });
+  }
+
+  function handlePathNode(node) {
+    if (node.done || node.taken) return;
+    node.taken = true;
+
+    // Mark all nodes in this layer as taken (to enforce single path)
+    var path = state.runPath;
+    var allLayers = path.layers.concat([[path.boss]]);
+    for (var l = 0; l < allLayers.length; l++) {
+      for (var n = 0; n < allLayers[l].length; n++) {
+        if (allLayers[l][n].id === node.id) {
+          // Found the layer - mark all as taken
+          allLayers[l].forEach(function(x) { if (!x.done) x.taken = true; });
+          break;
+        }
+      }
+    }
+
+    switch (node.type) {
+      case 'easy':
+      case 'hard':
+        startBattle(path.world, node.stage, node.modifier);
+        break;
+      case 'mystery':
+        handleMystery(node);
+        break;
+      case 'shop':
+        handleShopNode(node);
+        break;
+      case 'boss':
+        startBattle(path.world, node.stage, null);
+        break;
+    }
+  }
+
+  function handleMystery(node) {
+    var event = MYSTERY_EVENTS[Math.floor(Math.random() * MYSTERY_EVENTS.length)];
+    var result = event.effect();
+    saveState();
+    node.done = true;
+
+    // Show event result
+    var overlay = document.getElementById('artifactOverlay');
+    var panel = document.getElementById('artifactPanel');
+    overlay.style.display = 'flex';
+    panel.innerHTML =
+      '<h3>' + event.icon + ' ' + event.name + '</h3>' +
+      '<div class="ap-sub">' + event.desc + '</div>' +
+      '<div style="font-size:1.2em;font-weight:700;padding:12px;color:var(--accent)">' + result + '</div>' +
+      '<button class="btn btn-primary btn-sm" id="btnMysteryOk">继续冒险</button>';
+
+    document.getElementById('btnMysteryOk').addEventListener('click', function() {
+      overlay.style.display = 'none';
+      showPathMap(state.runPath.world);
+    });
+    showToast(event.icon + ' ' + result);
+  }
+
+  function handleShopNode(node) {
+    node.done = true;
+    showScreen('shop');
+    document.getElementById('shopCoins').textContent = state.coins;
+    var list = document.getElementById('shopItems');
+    list.innerHTML = '';
+
+    // Apply discount if artifact present
+    var discount = state.runArtifacts.some(function(a) { return a.id === 'shop_discount'; }) ? 0.7 : 1;
+
+    shopItems.forEach(function(item) {
+      var cost = Math.floor(item.cost * discount);
+      var div = document.createElement('div');
+      div.className = 'shop-item';
+      div.innerHTML =
+        '<div class="shop-item-icon">' + item.icon + '</div>' +
+        '<div class="shop-item-body">' +
+          '<div class="shop-item-name">' + item.name + ' (已有: ' + (state.items[item.id] || 0) + ')</div>' +
+          '<div class="shop-item-desc">' + item.desc + '</div>' +
+        '</div>' +
+        '<div class="shop-item-cost">💰 ' + cost + (discount < 1 ? ' <span style="font-size:.7em;text-decoration:line-through;color:var(--text3)">'+item.cost+'</span>' : '') + '</div>';
+      div.addEventListener('click', function() {
+        if (state.coins >= cost) {
+          state.coins -= cost;
+          state.items[item.id] = (state.items[item.id] || 0) + 1;
+          saveState();
+          showToast('✅ 购买了 ' + item.name + '！');
+          // Refresh shop display
+          handleShopNode(node);
+        } else {
+          showToast('💰 金币不足！');
+        }
+      });
+      list.appendChild(div);
+    });
+
+    // Add back button
+    var footer = document.createElement('div');
+    footer.style.cssText = 'text-align:center;padding:16px 0';
+    footer.innerHTML = '<button class="btn btn-primary btn-sm" id="btnShopDone">继续冒险 →</button>';
+    footer.addEventListener('click', function(e) {
+      if (e.target.id === 'btnShopDone') {
+        document.getElementById('btnShopDone').removeEventListener('click', arguments.callee);
+        showPathMap(state.runPath.world);
+      }
+    });
+    list.appendChild(footer);
+
+    // Override shop back button temporarily
+    var oldBack = document.getElementById('btnShopBack').onclick;
+    document.getElementById('btnShopBack').onclick = function() {
+      showPathMap(state.runPath.world);
+    };
+  }
+
+  // ========== BATTLE ==========
+  function startBattle(world, stage, modifier) {
+    showScreen('battle');
+    var modLabel = modifier ? ' [' + modifier.icon + ' ' + modifier.name + ']' : '';
+    document.getElementById('battleStageName').textContent = world.name + ' · ' + stage.name + modLabel;
+    document.getElementById('battleScore').textContent = state.score;
+
+    // Apply modifier to stage
+    var effectiveStage = {
+      id: stage.id,
+      name: stage.name,
+      ename: stage.ename,
+      eicon: stage.eicon,
+      hp: stage.hp,
+      damage: stage.damage,
+      questions: stage.questions,
+      boss: stage.boss,
+      isReview: stage.isReview,
+      reviewPool: stage.reviewPool,
+      goldMult: 1.0,
+      regen: 0
+    };
+    var dmgMod = function(d) { return d; };
+    if (modifier) {
+      dmgMod = modifier.apply(effectiveStage);
+      effectiveStage.modifier = modifier;
+    }
+
+    // Apply curse from mystery event
+    if (state._cursedStage) {
+      effectiveStage.damage = Math.floor(effectiveStage.damage * 1.5);
+      state._cursedStage = false;
+      showToast('💀 诅咒生效！本场受伤×1.5');
+    }
+
+    // Boss fight atmosphere + mechanic init
+    var battleScreen = document.getElementById('battleScreen');
+    var bossMech = null;
+    var bossPhaseIdx = 0;
+    var bossPrevHp = null;
+    if (stage.boss) {
+      battleScreen.classList.add('boss-fight');
+      if (stage.mechanic) {
+        bossMech = stage.mechanic;
+        bossPrevHp = effectiveStage.hp;
+      }
+    } else {
+      battleScreen.classList.remove('boss-fight');
+    }
+
+    // Draw skill cards
+    var drawnSkills = drawBattleSkills();
+
+    battleState = {
+      world: world,
+      stage: effectiveStage,
+      enemyHp: effectiveStage.hp,
+      enemyMaxHp: effectiveStage.hp,
+      questionCount: 0,
+      totalQuestions: effectiveStage.questions,
+      correctInStage: 0,
+      answered: false,
+      currentQuestion: null,
+      usedInStage: [],
+      usedInBossLoop: [],      // w4 boss time loop tracking
+      dmgMod: dmgMod,
+      shieldUsed: false,
+      firstQuestion: true,
+      // Boss mechanic state
+      bossMechanic: bossMech,
+      bossPhase: bossPhaseIdx,
+      bossPrevPhaseHp: bossPrevHp,
+      bossGateCount: 0,        // w5 boss gate counter
+      // Skill card state
+      drawnSkills: drawnSkills,
+      activeSkill: null,       // { skill, pending: bool }
+      skillUsed: false,        // prevent double-use
+      skillEffect: {}           // { precise, shield, gold_rain, time_stop }
+    };
+
+    document.getElementById('enemySprite').textContent = stage.eicon;
+    document.getElementById('enemySprite').classList.remove('hit');
+    document.getElementById('enemyName').textContent = stage.ename;
+    document.getElementById('enemyHpFill').style.width = '100%';
+    document.getElementById('enemyHpText').textContent = battleState.enemyHp + '/' + battleState.enemyMaxHp;
+    document.getElementById('battleLog').textContent = '';
+    document.getElementById('battleLog').className = 'battle-log';
+    document.getElementById('playerHpFill').style.width = (state.playerHp / state.maxHp * 100) + '%';
+    document.getElementById('playerHpText').textContent = state.playerHp + '/' + state.maxHp;
+    document.getElementById('comboCount').textContent = state.combo;
+    document.getElementById('questionHint').textContent = '';
+
+    // Show flavor text if available
+    if (stage.flavor) {
+      var flavorId = 'flavor-' + stage.id;
+      var flavorHtml = stage.flavor + ' ';
+      flavorHtml += createTranslationButton(stage.flavor, stage.flavorZh || '', flavorId);
+      document.getElementById('battleLog').innerHTML = flavorHtml;
+      document.getElementById('battleLog').className = 'battle-log';
+    }
+
+    // Render skill cards
+    renderSkillCards();
+    // Render boss mechanic indicator
+    renderBossMechanic();
+
+    updatePowerupButtons();
+    // Boss battle: show dialogue before first question
+    if (stage.boss) {
+      showBossDialogue(stage, function() { nextQuestion(); });
+    } else {
+      nextQuestion();
+    }
+  }
+
+  function nextQuestion() {
+    if (battleState && battleState.isReview) {
+      nextQuestionReview();
+      return;
+    }
+    if (battleState.questionCount >= battleState.totalQuestions) {
+      // Stage complete - victory!
+      winStage();
+      return;
+    }
+    if (state.playerHp <= 0) {
+      loseStage();
+      return;
+    }
+
+    battleState.answered = false;
+    var options = document.getElementById('optionsGrid').querySelectorAll('.option-btn');
+    options.forEach(function(o) { o.className = 'option-btn'; });
+
+    // Pick question (Optimization 3: weighted with cooldown)
+    var worldQs = QUESTIONS[battleState.world.id];
+    var available = [];
+    var recent = state.recentQuestions[battleState.world.id] || [];
+    var COOLDOWN = Math.min(worldQs.length - 1, 6); // cooldown window
+
+    worldQs.forEach(function(q, i) {
+      if (battleState.usedInStage.indexOf(i) === -1) available.push(i);
+    });
+    if (available.length === 0) {
+      battleState.usedInStage = [];
+      available = worldQs.map(function(_, i) { return i; });
+    }
+
+    // Weight: recently used questions get lower probability
+    // Boss mechanic: phase question filtering
+    var weights = available.map(function(qi) {
+      var q = worldQs[qi];
+      // Boss phase filter
+      if (battleState.bossMechanic && !getBossPhaseQuestionFilter(q)) return 0;
+      var pos = recent.indexOf(qi);
+      if (pos === -1) return 3;  // never used recently → high weight
+      if (pos >= COOLDOWN - 2) return 0.2; // very recent → low weight
+      return 1;
+    });
+
+    // If all weights are 0 (boss filter eliminated everything), fallback to all
+    if (weights.reduce(function(a,b){return a+b;},0) === 0) {
+      weights = available.map(function() { return 1; });
+    }
+
+    // Weighted random pick
+    var totalW = weights.reduce(function(a, b) { return a + b; }, 0);
+    var r = Math.random() * totalW;
+    var acc = 0;
+    var qi = available[0];
+    for (var k = 0; k < available.length; k++) {
+      acc += weights[k];
+      if (r <= acc) { qi = available[k]; break; }
+    }
+
+    // Track in recent
+    if (!state.recentQuestions[battleState.world.id]) {
+      state.recentQuestions[battleState.world.id] = [];
+    }
+    state.recentQuestions[battleState.world.id].push(qi);
+    if (state.recentQuestions[battleState.world.id].length > COOLDOWN) {
+      state.recentQuestions[battleState.world.id].shift();
+    }
+
+    battleState.usedInStage.push(qi);
+    battleState.currentQuestion = worldQs[qi];
+    battleState.questionCount++;
+
+    var q = battleState.currentQuestion;
+    document.getElementById('questionLabel').textContent = q.label || '语法挑战';
+    document.getElementById('questionText').textContent = q.q;
+    document.getElementById('questionHint').textContent = '';
+    document.getElementById('battleLog').textContent = '第 ' + battleState.questionCount + '/' + battleState.totalQuestions + ' 题';
+    document.getElementById('battleLog').className = 'battle-log';
+
+    // Shuffle options
+    var indices = [0, 1, 2, 3];
+    for (var i = indices.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = indices[i]; indices[i] = indices[j]; indices[j] = tmp;
+    }
+    battleState.optionMap = indices;
+    battleState.correctIdx = indices.indexOf(q.ans);
+
+    var grid = document.getElementById('optionsGrid');
+    grid.innerHTML = '';
+    indices.forEach(function(origIdx) {
+      var btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = q.opts[origIdx];
+      btn.addEventListener('click', function() { selectAnswer(origIdx, btn); });
+      grid.appendChild(btn);
+    });
+
+    // Artifact: first_eye - auto-highlight correct answer for first question
+    if (battleState.firstQuestion && state.runArtifacts.some(function(a) { return a.id === 'first_eye'; })) {
+      var allOptBtns = grid.querySelectorAll('.option-btn');
+      var hintIdx = battleState.correctIdx;
+      allOptBtns.forEach(function(b, bi) {
+        if (bi !== hintIdx) {
+          b.style.opacity = '.35';
+          b.style.pointerEvents = 'none';
+        }
+      });
+      document.getElementById('questionHint').textContent = '👁️ 先制の眼：答案已呈现';
+    }
+    battleState.firstQuestion = false;
+  }
+
+  function selectAnswer(idx, btnEl) {
+    if (battleState.answered) return;
+    battleState.answered = true;
+
+    var q = battleState.currentQuestion;
+    var correct = idx === q.ans;
+    var allBtns = document.getElementById('optionsGrid').querySelectorAll('.option-btn');
+
+    // Disable all buttons
+    allBtns.forEach(function(b) { b.classList.add('disabled'); });
+
+    if (correct) {
+      btnEl.classList.add('correct');
+      state.combo++;
+      if (state.combo > state.bestCombo) state.bestCombo = state.combo;
+      state.totalCorrect++;
+      battleState.correctInStage++;
+
+      var critThreshold = 5;
+      // Artifact: crit_low lowers threshold
+      if (state.runArtifacts.some(function(a) { return a.id === 'crit_jewel'; })) critThreshold = 3;
+      // Talent: crit lowers threshold further
+      var critTl = getTalentLevel('crit');
+      if (critTl > 0) {
+        var critVals = [5,4,3];
+        critThreshold = Math.min(critThreshold, critVals[critTl - 1]);
+      }
+
+      var dmg = 10 + state.combo * 2;
+      // Artifact: combo_book adds flat bonus
+      if (state.runArtifacts.some(function(a) { return a.id === 'combo_book'; })) dmg += 3;
+      // Artifact: class_mastery for word class questions
+      if (state.runArtifacts.some(function(a) { return a.id === 'class_mastery'; }) && q.label && q.label.indexOf('词类') >= 0) dmg += 12;
+      // Artifact: particle_amulet for particle questions
+      if (state.runArtifacts.some(function(a) { return a.id === 'particle_amulet'; }) && q.label && q.label.indexOf('助词') >= 0) dmg += 8;
+
+      if (state.combo >= critThreshold) dmg = Math.floor(dmg * 1.5);
+      // Artifact: fury_chance for 20% double damage
+      if (state.runArtifacts.some(function(a) { return a.id === 'fury_horn'; }) && Math.random() < 0.2) {
+        dmg = dmg * 2;
+        showToast('📯 猛攻触发！双倍伤害！');
+      }
+      // Skill: precise strike
+      if (battleState.skillEffect.precise) {
+        dmg = dmg * 2;
+        battleState.skillEffect.precise = false;
+      }
+      // Boss mechanic: apply damage modifier
+      dmg = applyBossDamageMod(dmg);
+
+      // Optimization 2: float damage number from enemy
+      var enemyRect = document.getElementById('enemySprite').getBoundingClientRect();
+      var dmgCls = state.combo >= 5 ? 'crit' : '';
+      floatDamage(
+        enemyRect.left + enemyRect.width / 2 - 20,
+        enemyRect.top,
+        '-' + dmg,
+        dmgCls
+      );
+
+      battleState.enemyHp = Math.max(0, battleState.enemyHp - dmg);
+
+      document.getElementById('battleLog').textContent = '✅ 正确！造成 ' + dmg + ' 点伤害！';
+      document.getElementById('battleLog').className = 'battle-log damage';
+      document.getElementById('enemySprite').classList.add('hit');
+      document.getElementById('enemyHpFill').style.width = (battleState.enemyHp / battleState.enemyMaxHp * 100) + '%';
+      document.getElementById('enemyHpText').textContent = battleState.enemyHp + '/' + battleState.enemyMaxHp;
+
+      if (state.combo >= 3) {
+        document.getElementById('comboCount').textContent = state.combo;
+      }
+
+      // Coins with gold bonus (talent + artifact + modifier)
+      var goldBon = 1.0;
+      var goldTl = getTalentLevel('gold_bonus');
+      if (goldTl > 0) {
+        var goldVals = [.2, .4, .6];
+        goldBon += goldVals[goldTl - 1];
+      }
+      if (state.runArtifacts.some(function(a) { return a.id === 'gold_bell'; })) goldBon += 0.25;
+      if (battleState.stage.goldMult) goldBon *= battleState.stage.goldMult;
+      // Skill: gold rain
+      if (battleState.skillEffect.gold_rain) {
+        goldBon *= 3;
+        battleState.skillEffect.gold_rain = false;
+      }
+      state.coins += Math.floor((12 + Math.floor(dmg / 4)) * goldBon);
+      state.score += dmg * 10;
+
+      // Boss phase check after damage
+      checkBossPhase();
+      renderBossMechanic();
+
+      // Enemy regen (modifier + boss phase)
+      if (battleState.stage.regen && battleState.enemyHp > 0) {
+        battleState.enemyHp = Math.min(battleState.enemyMaxHp, battleState.enemyHp + battleState.stage.regen);
+        document.getElementById('enemyHpFill').style.width = (battleState.enemyHp / battleState.enemyMaxHp * 100) + '%';
+        document.getElementById('enemyHpText').textContent = battleState.enemyHp + '/' + battleState.enemyMaxHp;
+      }
+
+      // Check combo milestone
+      if (state.combo === 5) {
+        triggerShake();
+        spawnParticles(window.innerWidth / 2, window.innerHeight / 2, '#d4a61b');
+        showToast('🔥 5连击！暴击加成！');
+      }
+      if (state.combo === 10) {
+        triggerShake();
+        spawnParticles(window.innerWidth / 2, window.innerHeight / 2, '#c49a6c');
+        showToast('⚡ 10连击！超级暴击！');
+      }
+
+      // Check enemy defeated
+      if (battleState.enemyHp <= 0) {
+        setTimeout(function() { winStage(); }, 800);
+        return;
+      }
+    } else {
+      btnEl.classList.add('wrong');
+      allBtns[battleState.correctIdx].classList.add('correct');
+      state.combo = 0;
+      state.totalWrong++;
+
+      // Optimization 1: record wrong answer
+      var waEntry = {
+        worldId: battleState.world.id,
+        questionIdx: battleState.usedInStage[battleState.usedInStage.length - 1],
+        timestamp: Date.now()
+      };
+      // Deduplicate: don't add if already exists
+      var isDup = state.wrongAnswers.some(function(wa) {
+        return wa.worldId === waEntry.worldId && wa.questionIdx === waEntry.questionIdx;
+      });
+      if (!isDup) {
+        state.wrongAnswers.push(waEntry);
+      }
+
+      var enemyDmg = battleState.stage.damage;
+      // Apply boss mechanic damage modifier
+      enemyDmg = applyBossDamageToPlayer(enemyDmg);
+      // Artifact: shield - first wrong answer per stage does no damage
+      var hasShield = state.runArtifacts.some(function(a) { return a.id === 'shield'; });
+      if (hasShield && !battleState.shieldUsed) {
+        battleState.shieldUsed = true;
+        enemyDmg = 0;
+        showToast('🛡️ 语法の盾发动！伤害无效化！');
+      }
+      // Skill: iron defense
+      if (battleState.skillEffect.shield) {
+        enemyDmg = 0;
+        battleState.skillEffect.shield = false;
+        showToast('🛡️ 铁壁防御！伤害无效化！');
+      }
+      // Skill: time stop - skip enemy turn
+      if (battleState.skillEffect.time_stop) {
+        enemyDmg = 0;
+        battleState.skillEffect.time_stop = false;
+        showToast('⏳ 时间停止！敌人回合跳过！');
+      }
+      // Boss gate: reset on wrong answer
+      if (battleState.bossMechanic && battleState.bossMechanic.type === 'final_gate') {
+        battleState.bossGateCount = 0;
+      }
+      // Boss phase check on wrong (show phase stasis)
+      renderBossMechanic();
+      state.playerHp = Math.max(0, state.playerHp - enemyDmg);
+
+      // Artifact: regen_on_wrong - heal 5HP after wrong answer
+      if (state.runArtifacts.some(function(a) { return a.id === 'regen_ring'; }) && state.playerHp > 0) {
+        state.playerHp = Math.min(state.maxHp, state.playerHp + 5);
+      }
+
+      // Optimization 2: float damage on player, flash player bar, shake
+      var playerRect = document.querySelector('.player-bar').getBoundingClientRect();
+      floatDamage(
+        playerRect.left + playerRect.width / 2 - 20,
+        playerRect.top - 10,
+        '-' + enemyDmg,
+        'enemy-dmg'
+      );
+      if (enemyDmg >= 20) triggerShake();
+      document.querySelector('.player-bar').classList.add('player-flash');
+      setTimeout(function() {
+        document.querySelector('.player-bar').classList.remove('player-flash');
+      }, 500);
+
+      document.getElementById('battleLog').textContent = '❌ 错误！受到 ' + enemyDmg + ' 点伤害！正确答案是：' + q.opts[q.ans];
+      document.getElementById('battleLog').className = 'battle-log enemy-damage';
+      document.getElementById('questionHint').textContent = '💡 ' + (q.hint || '');
+      document.getElementById('playerHpFill').style.width = (state.playerHp / state.maxHp * 100) + '%';
+      document.getElementById('playerHpText').textContent = state.playerHp + '/' + state.maxHp;
+      document.getElementById('comboCount').textContent = '0';
+
+      if (state.playerHp <= 0) {
+        setTimeout(function() { loseStage(); }, 1000);
+        return;
+      }
+    }
+
+    document.getElementById('battleScore').textContent = state.score;
+    document.getElementById('comboCount').textContent = state.combo;
+    saveState();
+
+    setTimeout(function() { nextQuestion(); }, 1000);
+  }
+
+  function winStage() {
+    var isBoss = battleState.stage.boss;
+    var isReview = battleState.stage.isReview;
+    var correctCount = battleState.correctInStage;
+    var wasHard = !!battleState.stage.modifier;
+    var finalBossId = battleState.stage.id; // Save before nullifying battleState
+
+    if (!isReview) {
+      state.completedStages[battleState.stage.id] = true;
+    }
+    battleState = null;
+    state.score += 50;
+
+    // Economy: stage clear gold bonus
+    var clearGold = isBoss ? 60 : 30;
+    state.coins += clearGold;
+
+    // Artifact: stage_heal
+    if (state.runArtifacts.some(function(a) { return a.id === 'heal_stone'; })) {
+      state.playerHp = Math.min(state.maxHp, state.playerHp + 10);
+    }
+
+    // Unlock next world (skip for review battles)
+    if (!isReview) {
+      var worldIdx = WORLDS.findIndex(function(w) { return w.id === state.currentWorld; });
+      if (worldIdx < WORLDS.length - 1) {
+        var nextWorld = WORLDS[worldIdx + 1];
+        if (state.unlockedWorlds.indexOf(nextWorld.id) === -1) {
+          state.unlockedWorlds.push(nextWorld.id);
+          showToast('🔓 解锁新世界：' + nextWorld.name + '！');
+        }
+      }
+    }
+
+    // Level up check
+    var completedCount = Object.keys(state.completedStages).length;
+    state.level = Math.floor(completedCount / 5) + 1;
+    var hpTl = getTalentLevel('hp');
+    if (hpTl > 0) {
+      var hpBonus = TALENTS.find(function(t){return t.id==='hp';}).vals.slice(0,hpTl).reduce(function(a,b){return a+b;},0);
+      state.maxHp = 100 + hpBonus;
+    } else {
+      state.maxHp = 100 + (state.level - 1) * 20;
+    }
+    state.playerHp = Math.min(state.maxHp, state.playerHp + 30);
+
+    saveState();
+    spawnParticles(window.innerWidth / 2, window.innerHeight / 2, '#5a7a5e');
+
+    showScreen('result');
+    var icon = document.getElementById('resultIcon');
+    var title = document.getElementById('resultTitle');
+    var stats = document.getElementById('resultStats');
+    var nextBtn = document.getElementById('btnNext');
+
+    if (isReview) {
+      icon.textContent = '📖';
+      title.textContent = '错题挑战完成！';
+      title.className = 'result-title win';
+    } else if (isBoss) {
+      var isFinalBossFlag = finalBossId === 'w5boss';
+      icon.textContent = isFinalBossFlag ? '👑' : '🏆';
+      title.textContent = isFinalBossFlag ? '魔 王 讨 伐！' : 'BOSS 击破！';
+      title.className = 'result-title win';
+    } else {
+      icon.textContent = '🎉';
+      title.textContent = '关卡通关！';
+      title.className = 'result-title win';
+    }
+
+    stats.innerHTML =
+      '<div>本关答对 <span>' + correctCount + '</span> 题</div>' +
+      '<div>总得分 <span>' + state.score + '</span></div>' +
+      '<div>金币 <span>' + state.coins + ' 💰</span></div>' +
+      '<div>等级 <span>Lv.' + state.level + '</span></div>';
+
+    var isFinalBossFlag = finalBossId === 'w5boss';
+    nextBtn.textContent = isReview ? '📖 返回错题本' : (isFinalBossFlag ? '✨ 观看结局' : (isBoss ? '🗺️ 返回地图' : '▶ 继续'));
+    nextBtn.onclick = function() {
+      try {
+        if (isReview) {
+          showReview();
+          return;
+        }
+        if (isFinalBossFlag) {
+          showEnding();
+          return;
+        }
+        if (isBoss) {
+          showMap();
+          return;
+        }
+        // Non-boss stage: show artifact pick, then continue path
+        showArtifactPick(wasHard, function() {
+          if (!state.runPath || !state.runPath.world) {
+            console.warn('runPath missing, falling back to map');
+            showMap();
+            return;
+          }
+          showPathMap(state.runPath.world);
+        });
+      } catch(e) {
+        console.error('winStage continue error:', e);
+        showMap();
+      }
+    };
+  }
+
+  function loseStage() {
+    var retryWorld = WORLDS.find(function(w) { return w.id === state.currentWorld; });
+    var retryModifier = battleState.stage.modifier || null;
+    var correctInStage = battleState ? battleState.correctInStage : 0;
+    var totalQuestions = battleState ? battleState.totalQuestions : 0;
+    state.combo = 0;
+    state.playerHp = Math.max(1, state.playerHp); // Don't die completely
+    saveState();
+
+    showScreen('result');
+    document.getElementById('resultIcon').textContent = '💔';
+    document.getElementById('resultTitle').textContent = '战斗失败...';
+    document.getElementById('resultTitle').className = 'result-title lose';
+    document.getElementById('resultStats').innerHTML =
+      '<div>不要气馁！</div>' +
+      '<div>答对 <span>' + correctInStage + '</span>' +
+      '/<span>' + totalQuestions + '</span> 题</div>' +
+      '<div>总得分 <span>' + state.score + '</span></div>';
+    document.getElementById('btnNext').textContent = '🔄 重试';
+    document.getElementById('btnNext').onclick = function() {
+      // Restore HP a bit
+      state.playerHp = Math.min(state.maxHp, state.playerHp + 20);
+      saveState();
+      // Re-enter stage with original world and modifier
+      if (retryWorld) {
+        var origStage = retryWorld.stages.find(function(s) { return s.id === battleState.stage.id; }) || battleState.stage;
+        startBattle(retryWorld, origStage, retryModifier);
+      } else {
+        showMap();
+      }
+    };
+  }
+
+  document.getElementById('btnMap').addEventListener('click', showMap);
+  document.getElementById('btnFlee').addEventListener('click', function() {
+    if (confirm('确定要逃跑吗？当前关卡进度将丢失。')) {
+      state.combo = 0;
+      battleState = null;
+      saveState();
+      if (state.runPath) {
+        showPathMap(state.runPath.world);
+      } else {
+        showMap();
+      }
+    }
+  });
+
+  // ========== POWER-UPS ==========
+  function updatePowerupButtons() {
+    document.getElementById('puHint').textContent = '💡 提示 (-20💰) [' + state.items.hint + ']';
+    document.getElementById('puSkip').textContent = '⏭️ 跳过 (-30💰)';
+
+    document.getElementById('puHint').disabled = (state.items.hint <= 0 && state.coins < 20) || battleState.answered;
+    document.getElementById('puSkip').disabled = state.coins < 30 || battleState.answered;
+  }
+
+  document.getElementById('puHint').addEventListener('click', function() {
+    if (battleState.answered) return;
+    if (state.items.hint > 0) {
+      state.items.hint--;
+    } else if (state.coins >= 20) {
+      state.coins -= 20;
+    } else {
+      showToast('💰 金币不足！');
+      return;
+    }
+    saveState();
+
+    // Remove 2 wrong options
+    var btns = document.getElementById('optionsGrid').querySelectorAll('.option-btn');
+    var wrongIndices = [];
+    btns.forEach(function(b, i) {
+      if (i !== battleState.correctIdx) wrongIndices.push(i);
+    });
+    // Shuffle and pick 2
+    wrongIndices.sort(function() { return Math.random() - .5; });
+    var toHide = wrongIndices.slice(0, 2);
+    toHide.forEach(function(i) {
+      btns[i].style.opacity = '.2';
+      btns[i].style.pointerEvents = 'none';
+    });
+    document.getElementById('questionHint').textContent = '💡 ' + (battleState.currentQuestion.hint || '');
+    updatePowerupButtons();
+    showToast('💡 已消除两个错误选项！');
+  });
+
+  document.getElementById('puSkip').addEventListener('click', function() {
+    if (battleState.answered) return;
+    if (state.coins < 30) {
+      showToast('💰 金币不足！');
+      return;
+    }
+    state.coins -= 30;
+    saveState();
+    battleState.answered = true;
+    document.getElementById('battleLog').textContent = '⏭️ 跳过此题！';
+    document.getElementById('battleLog').className = 'battle-log';
+    updatePowerupButtons();
+    setTimeout(function() { nextQuestion(); }, 600);
+  });
+
+  // ========== SKILL CARDS (P3) ==========
+  function renderSkillCards() {
+    if (!battleState || !battleState.drawnSkills) return;
+    var tray = document.getElementById('skillTray');
+    if (!tray) return;
+    tray.innerHTML = '';
+    battleState.drawnSkills.forEach(function(s, i) {
+      var card = document.createElement('div');
+      card.className = 'skill-card';
+      if (battleState.skillUsed && battleState.activeSkill && battleState.activeSkill.skill.id === s.id) {
+        card.classList.add('used');
+      }
+      card.innerHTML = '<span class="sk-icon">' + s.icon + '</span><span class="sk-name">' + s.name + '</span>';
+      card.addEventListener('click', function() { useSkill(s); });
+      tray.appendChild(card);
+    });
+  }
+
+  function useSkill(skill) {
+    if (!battleState || battleState.skillUsed || battleState.answered) return;
+    battleState.skillUsed = true;
+    battleState.activeSkill = { skill: skill, pending: true };
+
+    if (skill.id === 'reroll') {
+      // Immediate effect: replace wrong options
+      battleState.activeSkill.pending = false;
+      showToast(skill.icon + ' 洗牌！选项已更换！');
+      // Re-render options from current question with new wrong options
+      var q = battleState.currentQuestion;
+      rerenderOptions(q);
+    } else if (skill.id === 'quick_think') {
+      // Immediate effect: show hint
+      battleState.activeSkill.pending = false;
+      document.getElementById('questionHint').textContent = '💡 ' + (battleState.currentQuestion.hint || '');
+      showToast(skill.icon + ' 快速思考！提示已显示！');
+    } else {
+      // Delayed effects: precise, shield, gold_rain, time_stop
+      battleState.skillEffect[skill.id] = true;
+      showToast(skill.icon + ' ' + skill.name + '发动！');
+    }
+    renderSkillCards();
+  }
+
+  function rerenderOptions(q) {
+    var indices = [0,1,2,3];
+    for (var i = indices.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = indices[i]; indices[i] = indices[j]; indices[j] = tmp;
+    }
+    battleState.optionMap = indices;
+    battleState.correctIdx = indices.indexOf(q.ans);
+    var grid = document.getElementById('optionsGrid');
+    grid.innerHTML = '';
+    indices.forEach(function(origIdx) {
+      var btn = document.createElement('button');
+      btn.className = 'option-btn';
+      var label = String.fromCharCode(65 + indices.indexOf(origIdx));
+      btn.textContent = label + '. ' + q.opts[origIdx];
+      btn.addEventListener('click', function() { selectAnswer(origIdx); });
+      grid.appendChild(btn);
+    });
+  }
+
+  function renderQuestionOptions(q, order) {
+    if (!order) order = [0,1,2,3];
+    battleState.optionMap = order;
+    battleState.correctIdx = order.indexOf(q.ans);
+    var grid = document.getElementById('optionsGrid');
+    grid.innerHTML = '';
+    order.forEach(function(origIdx) {
+      var btn = document.createElement('button');
+      btn.className = 'option-btn';
+      var label = String.fromCharCode(65 + order.indexOf(origIdx));
+      btn.textContent = label + '. ' + q.opts[origIdx];
+      btn.addEventListener('click', function() { selectAnswer(origIdx); });
+      grid.appendChild(btn);
+    });
+    battleState.answered = false;
+  }
+
+  // ========== BOSS MECHANICS (P1) ==========
+  function renderBossMechanic() {
+    var el = document.getElementById('bossMechIndicator');
+    if (!el) return;
+    if (!battleState || !battleState.bossMechanic) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    var mech = battleState.bossMechanic;
+    var phase = (mech.type === 'phase_shift' && mech.phases) ? mech.phases[battleState.bossPhase] : null;
+    if (phase) {
+      el.innerHTML = '<span class="bmi-badge">' + phase.name + '</span> ' + phase.desc;
+    } else if (mech.type === 'mirror_shield') {
+      var shieldActive = battleState.enemyHp > 0 && state.combo < mech.breakCombo;
+      el.innerHTML = shieldActive ? ('<span class="bmi-badge active">盾</span> ' + mech.desc + ' [' + state.combo + '/' + mech.breakCombo + ']') : ('<span class="bmi-badge broken">盾破</span> 连击已突破！');
+    } else if (mech.type === 'final_gate') {
+      el.innerHTML = '<span class="bmi-badge">门</span> ' + mech.desc + ' [' + battleState.bossGateCount + '/' + mech.gateNeeded + ']';
+    }
+    el.style.display = 'block';
+  }
+
+  function checkBossPhase() {
+    if (!battleState || !battleState.bossMechanic || battleState.bossMechanic.type !== 'phase_shift') return;
+    var mech = battleState.bossMechanic;
+    var phases = mech.phases;
+    var hpPct = battleState.enemyHp / battleState.enemyMaxHp;
+    // Check all phases in order
+    for (var p = battleState.bossPhase; p < phases.length; p++) {
+      if (hpPct <= phases[p].hpPct && battleState.bossPrevPhaseHp > battleState.enemyMaxHp * phases[p].hpPct) {
+        battleState.bossPhase = p;
+        showToast('⚠️ BOSS进入「' + phases[p].name + '」！');
+        spawnParticles(window.innerWidth / 2, window.innerHeight / 2, '#a0522d');
+        triggerShake();
+        renderBossMechanic();
+        break;
+      }
+    }
+    battleState.bossPrevPhaseHp = battleState.enemyHp;
+  }
+
+  function applyBossDamageMod(dmg) {
+    if (!battleState || !battleState.bossMechanic) return dmg;
+    var mech = battleState.bossMechanic;
+    if (mech.type === 'mirror_shield') {
+      if (state.combo < mech.breakCombo) {
+        dmg = Math.floor(dmg * (1 - mech.shieldPct));
+      }
+    }
+    if (mech.type === 'final_gate') {
+      battleState.bossGateCount++;
+      if (battleState.bossGateCount >= mech.gateNeeded) {
+        battleState.bossGateCount = 0;
+        dmg = Math.floor(dmg * mech.damageBoost);
+        showToast('🚪 终焉之门突破！伤害×' + mech.damageBoost + '！');
+      } else {
+        dmg = 0;
+        showToast('🚪 门未开启 [' + battleState.bossGateCount + '/' + mech.gateNeeded + ']，伤害被阻挡！');
+      }
+    }
+    if (mech.type === 'phase_shift') {
+      var phase = mech.phases[battleState.bossPhase];
+      if (phase && phase.dmgMult) dmg = Math.floor(dmg * phase.dmgMult);
+    }
+    return dmg;
+  }
+
+  function getBossPhaseQuestionFilter(q) {
+    if (!battleState || !battleState.bossMechanic) return true;
+    var mech = battleState.bossMechanic;
+    if (mech.type === 'phase_shift') {
+      var phase = mech.phases[battleState.bossPhase];
+      if (phase && phase.labelFilter) {
+        return phase.labelFilter.some(function(lb) {
+          return q.label && q.label.indexOf(lb) >= 0;
+        });
+      }
+    }
+    return true;
+  }
+
+  function applyBossDamageToPlayer(baseDmg) {
+    if (!battleState || !battleState.bossMechanic) return baseDmg;
+    var mech = battleState.bossMechanic;
+    if (mech.type === 'phase_shift') {
+      var phase = mech.phases[battleState.bossPhase];
+      if (phase && phase.dmgMult) return Math.floor(baseDmg * phase.dmgMult);
+    }
+    return baseDmg;
+  }
+
+  // ========== ROGUELIKE: ARTIFACT PICK ==========
+  function showArtifactPick(hardBonus, callback) {
+    var choices = pickArtifactChoices(hardBonus);
+    var overlay = document.getElementById('artifactOverlay');
+    var panel = document.getElementById('artifactPanel');
+    overlay.style.display = 'flex';
+
+    var html = '<h3>💎 选择遗物</h3><div class="ap-sub">选择一个遗物，效果持续本次冒险</div><div class="artifact-choices">';
+    choices.forEach(function(a) {
+      var rarityCls = a.rarity === 'legendary' ? 'legendary' : (a.rarity === 'rare' ? 'rare' : 'common');
+      var rarityName = a.rarity === 'legendary' ? '传说' : (a.rarity === 'rare' ? '稀有' : '普通');
+      html +=
+        '<div class="artifact-choice" data-id="' + a.id + '">' +
+          '<div class="ac-icon">' + a.icon + '</div>' +
+          '<div class="ac-body">' +
+            '<div class="ac-name">' + a.name + '</div>' +
+            '<div class="ac-desc">' + a.desc + '</div>' +
+            '<div class="ac-rarity ' + rarityCls + '">' + rarityName + '</div>' +
+          '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+    panel.innerHTML = html;
+
+    // Bind click events
+    var choiceEls = panel.querySelectorAll('.artifact-choice');
+    choiceEls.forEach(function(el) {
+      el.addEventListener('click', function() {
+        var id = el.getAttribute('data-id');
+        var artifact = ARTIFACTS.find(function(a) { return a.id === id; });
+        if (artifact) {
+          state.runArtifacts.push(artifact);
+          saveState();
+          showToast('💎 获得遗物：' + artifact.name + '！');
+        }
+        overlay.style.display = 'none';
+        if (callback) callback();
+      });
+    });
+  }
+
+  // ========== TALENT TREE ==========
+  function showTalent() {
+    showScreen('talent');
+    document.getElementById('talentCoins').textContent = state.coins;
+    var totalTalents = 0;
+    TALENTS.forEach(function(t) { totalTalents += getTalentLevel(t.id); });
+    document.getElementById('talentSummary').textContent = '已升级 ' + totalTalents + ' 次';
+
+    var grid = document.getElementById('talentGrid');
+    grid.innerHTML = '';
+    TALENTS.forEach(function(t) {
+      var lv = getTalentLevel(t.id);
+      var maxed = lv >= t.levels.length;
+      var cost = maxed ? 'MAX' : '💰 ' + t.levels[lv];
+      var canBuy = !maxed && state.coins >= t.levels[lv];
+
+      var card = document.createElement('div');
+      card.className = 'talent-card';
+      if (maxed) card.classList.add('maxed');
+
+      var dotsHtml = '';
+      for (var d = 0; d < t.levels.length; d++) {
+        dotsHtml += '<div class="t-dot' + (d < lv ? ' filled' : '') + '"></div>';
+      }
+
+      card.innerHTML =
+        '<div class="t-icon" style="background:' + t.color + '">' + t.icon + '</div>' +
+        '<div class="t-body">' +
+          '<div class="t-name">' + t.name + ' Lv.' + lv + '/' + t.levels.length + '</div>' +
+          '<div class="t-effect">' + (lv > 0 ? t.getEffect(lv) : t.desc) + '</div>' +
+          '<div class="t-lvl">' + dotsHtml + '</div>' +
+        '</div>' +
+        '<div class="t-action">' +
+          '<button class="btn btn-xs ' + (canBuy ? 'btn-primary' : 'btn-secondary') + '" ' + (!canBuy ? 'disabled' : '') + '>' + cost + '</button>' +
+        '</div>';
+
+      if (canBuy) {
+        card.querySelector('button').addEventListener('click', function() {
+          if (state.coins >= t.levels[lv]) {
+            state.coins -= t.levels[lv];
+            state.talents[t.id] = lv + 1;
+            saveState();
+            showToast('⭐ ' + t.name + ' 升级到 Lv.' + (lv + 1) + '！');
+            showTalent();
+          }
+        });
+      }
+
+      grid.appendChild(card);
+    });
+  }
+
+  // ========== MAP: add talent button ==========
+  // Override showMap to add talent button indicator
+  var _origShowMap = showMap;
+  var reviewFilterWorld = 'all';
+
+  function showReview() {
+    showScreen('review');
+    renderReviewFilters();
+    renderReviewList();
+  }
+
+  function renderReviewFilters() {
+    var container = document.getElementById('reviewFilters');
+    var chips = [{ id: 'all', label: '全部' }];
+    WORLDS.forEach(function(w) {
+      chips.push({ id: w.id, label: w.icon + ' ' + w.name });
+    });
+
+    container.innerHTML = '';
+    chips.forEach(function(c) {
+      var chip = document.createElement('div');
+      chip.className = 'review-filter-chip';
+      if (reviewFilterWorld === c.id) chip.classList.add('active');
+      chip.textContent = c.label;
+      chip.addEventListener('click', function() {
+        reviewFilterWorld = c.id;
+        renderReviewFilters();
+        renderReviewList();
+      });
+      container.appendChild(chip);
+    });
+  }
+
+  function renderReviewList() {
+    var list = document.getElementById('reviewList');
+    var countEl = document.getElementById('reviewCount');
+    var filtered = state.wrongAnswers;
+    var btnChallenge = document.getElementById('btnChallengeWrong');
+
+    if (reviewFilterWorld !== 'all') {
+      filtered = state.wrongAnswers.filter(function(wa) {
+        return wa.worldId === reviewFilterWorld;
+      });
+    }
+
+    countEl.textContent = filtered.length + ' 题';
+    btnChallenge.style.display = filtered.length > 0 ? '' : 'none';
+
+    if (filtered.length === 0) {
+      list.innerHTML =
+        '<div class="review-empty">' +
+        '<div class="rv-empty-icon">🎉</div>' +
+        '<div>还没有错题，继续保持！</div>' +
+        '</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    // Show most recent first
+    var items = filtered.slice().reverse();
+    items.forEach(function(wa) {
+      var world = WORLDS.find(function(w) { return w.id === wa.worldId; });
+      var q = QUESTIONS[wa.worldId][wa.questionIdx];
+      if (!q) return;
+
+      var card = document.createElement('div');
+      card.className = 'review-card';
+      card.innerHTML =
+        '<div class="rv-label" style="color:' + (world ? world.color : 'inherit') + '">' +
+          (world ? world.icon : '') + ' ' + (world ? world.name : '') + ' · ' + (q.label || '') +
+        '</div>' +
+        '<div class="rv-question">' + q.q + '</div>' +
+        '<div class="rv-wrong">✗ 你的错误选择（正确答案是 <b>' + q.opts[q.ans] + '</b>）</div>' +
+        '<div class="rv-hint">💡 ' + (q.hint || '无提示') + '</div>';
+      list.appendChild(card);
+    });
+  }
+
+  // Challenge wrong answers: create a custom battle
+  function challengeWrongAnswers() {
+    var pool = state.wrongAnswers;
+    if (reviewFilterWorld !== 'all') {
+      pool = pool.filter(function(wa) { return wa.worldId === reviewFilterWorld; });
+    }
+    if (pool.length === 0) {
+      showToast('📖 当前没有错题可挑战！');
+      return;
+    }
+    if (state.playerHp <= 0) {
+      showToast('❤️ HP不足，请先购买回复药水！');
+      return;
+    }
+
+    // Pick a random world from wrong answers as arena
+    var worldId = pool[0].worldId;
+    var world = WORLDS.find(function(w) { return w.id === worldId; });
+    var questionCount = Math.min(pool.length, 8);
+
+    // Create a virtual stage
+    var virtualStage = {
+      id: 'review_challenge',
+      name: '错题挑战',
+      ename: '记忆幽灵',
+      eicon: '👻',
+      hp: 60 + questionCount * 15,
+      damage: 12,
+      questions: questionCount,
+      boss: false,
+      isReview: true,
+      reviewPool: pool
+    };
+
+    state.currentWorld = worldId;
+    showMap = showMap; // preserve
+    startReviewBattle(world, virtualStage);
+  }
+
+  function startReviewBattle(world, stage) {
+    showScreen('battle');
+    document.getElementById('battleStageName').textContent = '📖 错题挑战 · ' + stage.name;
+    document.getElementById('battleScore').textContent = state.score;
+    document.getElementById('battleScreen').classList.remove('boss-fight');
+
+    battleState = {
+      world: world,
+      stage: stage,
+      enemyHp: stage.hp,
+      enemyMaxHp: stage.hp,
+      questionCount: 0,
+      totalQuestions: stage.questions,
+      correctInStage: 0,
+      answered: false,
+      currentQuestion: null,
+      usedInStage: [],
+      isReview: true,
+      reviewQueue: stage.reviewPool.slice()
+    };
+
+    document.getElementById('enemySprite').textContent = stage.eicon;
+    document.getElementById('enemySprite').classList.remove('hit');
+    document.getElementById('enemyName').textContent = stage.ename;
+    document.getElementById('enemyHpFill').style.width = '100%';
+    document.getElementById('enemyHpText').textContent = battleState.enemyHp + '/' + battleState.enemyMaxHp;
+    document.getElementById('battleLog').textContent = '';
+    document.getElementById('battleLog').className = 'battle-log';
+    document.getElementById('playerHpFill').style.width = (state.playerHp / state.maxHp * 100) + '%';
+    document.getElementById('playerHpText').textContent = state.playerHp + '/' + state.maxHp;
+    document.getElementById('comboCount').textContent = state.combo;
+    document.getElementById('questionHint').textContent = '';
+    updatePowerupButtons();
+    nextQuestionReview();
+  }
+
+  function nextQuestionReview() {
+    if (battleState.questionCount >= battleState.totalQuestions) {
+      winStage();
+      return;
+    }
+    if (state.playerHp <= 0) {
+      loseStage();
+      return;
+    }
+
+    battleState.answered = false;
+    var options = document.getElementById('optionsGrid').querySelectorAll('.option-btn');
+    options.forEach(function(o) { o.className = 'option-btn'; });
+
+    // Pick from review queue
+    var wa = battleState.reviewQueue.shift();
+    var q = QUESTIONS[wa.worldId][wa.questionIdx];
+    battleState.currentQuestion = q;
+    battleState.currentWorldId = wa.worldId;
+    battleState.questionCount++;
+
+    document.getElementById('questionLabel').textContent = '📖 错题回顾 · ' + (q.label || '');
+    document.getElementById('questionText').textContent = q.q;
+    document.getElementById('questionHint').textContent = '';
+    document.getElementById('battleLog').textContent = '第 ' + battleState.questionCount + '/' + battleState.totalQuestions + ' 题（错题挑战）';
+    document.getElementById('battleLog').className = 'battle-log';
+
+    // Shuffle options
+    var indices = [0, 1, 2, 3];
+    for (var i = indices.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = indices[i]; indices[i] = indices[j]; indices[j] = tmp;
+    }
+    battleState.optionMap = indices;
+    battleState.correctIdx = indices.indexOf(q.ans);
+
+    var grid = document.getElementById('optionsGrid');
+    grid.innerHTML = '';
+    indices.forEach(function(origIdx) {
+      var btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = q.opts[origIdx];
+      btn.addEventListener('click', function() { selectAnswer(origIdx, btn); });
+      grid.appendChild(btn);
+    });
+  }
+
+  // Override nextQuestion for review battles
+  var _origNextQuestion = nextQuestion;
+  // Patch: in selectAnswer, after correct/wrong handling, use appropriate next
+  var _origSelectAnswer = selectAnswer;
+
+  // Clear wrong answers
+  function clearWrongAnswers() {
+    if (confirm('确定清空所有错题记录吗？此操作不可撤销。')) {
+      state.wrongAnswers = [];
+      saveState();
+      renderReviewList();
+      showToast('🗑️ 错题记录已清空！');
+    }
+  }
+
+  // ========== SHOP SCREEN ==========
+  var shopItems = [
+    { id: 'hint', name: '提示卷轴', desc: '消除两个错误选项', cost: 40, icon: '📜' },
+    { id: 'heal', name: '回复药水', desc: '恢复40点HP（战斗中不可用）', cost: 60, icon: '🧪' },
+    { id: 'critical', name: '必杀符咒', desc: '下一题必定暴击（2倍伤害）', cost: 80, icon: '⚡' }
+  ];
+
+  function showShop() {
+    showScreen('shop');
+    document.getElementById('shopCoins').textContent = state.coins;
+    document.getElementById('btnShopBack').onclick = function() { showMap(); };
+    var list = document.getElementById('shopItems');
+    list.innerHTML = '';
+    shopItems.forEach(function(item) {
+      var div = document.createElement('div');
+      div.className = 'shop-item';
+      div.innerHTML =
+        '<div class="shop-item-icon">' + item.icon + '</div>' +
+        '<div class="shop-item-body">' +
+          '<div class="shop-item-name">' + item.name + ' (已有: ' + (state.items[item.id] || 0) + ')</div>' +
+          '<div class="shop-item-desc">' + item.desc + '</div>' +
+        '</div>' +
+        '<div class="shop-item-cost">💰 ' + item.cost + '</div>';
+      div.addEventListener('click', function() {
+        if (state.coins >= item.cost) {
+          state.coins -= item.cost;
+          state.items[item.id] = (state.items[item.id] || 0) + 1;
+          saveState();
+          showToast('✅ 购买了 ' + item.name + '！');
+          showShop();
+        } else {
+          showToast('💰 金币不足！');
+        }
+      });
+      list.appendChild(div);
+    });
+  }
+
+  document.getElementById('btnShop').addEventListener('click', showShop);
+  document.getElementById('btnReview').addEventListener('click', showReview);
+  document.getElementById('btnReviewBack').addEventListener('click', showMap);
+  document.getElementById('btnTalent').addEventListener('click', showTalent);
+  document.getElementById('btnChallengeWrong').addEventListener('click', challengeWrongAnswers);
+  document.getElementById('btnClearWrong').addEventListener('click', clearWrongAnswers);
+  document.getElementById('btnTalentBack').addEventListener('click', showMap);
+  document.getElementById('btnPathBack').addEventListener('click', function() {
+    state.runArtifacts = [];
+    state.runPath = null;
+    saveState();
+    showMap();
+  });
+
+  // ========== INIT ==========
+  initTitle();
+})();
+</script>
+</body>
+</html>
