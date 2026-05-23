@@ -1,0 +1,4457 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日本语语法框架 — vP·dP·cP 三层建造法</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600&family=Noto+Serif+JP:wght@400;600&family=Noto+Sans+SC:wght@400;500&family=Crimson+Pro:wght@400;600&display=swap" rel="stylesheet">
+<script>
+/* 防FOUC：在CSS渲染前先行应用主题，消除暗色模式冷启动闪白 */
+(function(){
+  try {
+    var t = localStorage.getItem('grammar-theme');
+    if (t === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else if (t === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      // system preference
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    }
+  } catch(e) {}
+})();
+</script>
+<style>
+/* ================================================================
+   CSS Variables & Theme
+   ================================================================ */
+:root {
+  /* 底色体系 — 暖白/米色调 */
+  --bg: #f6f1eb;
+  --bg2: #faf7f2;
+  --bg3: #ede7dc;
+  --text: #2d2418;
+  --text2: #6b5d4e;
+  --text3: #8c7e6a;
+  --border: #d6c9b8;
+  --accent: #a68b5b;
+  --link: #8b6f47;
+  --link-hover: #7a5e38;
+  /* 五模块暖色 */
+  --c1: #7a6f5d;  /* 词类 - 暖灰棕 */
+  --c2: #8b6f47;  /* 活用 - 焦糖 */
+  --c3: #5a7a5e;  /* 格助词 - 鼠尾草 */
+  --c4: #8a5c3a;  /* 时态·体·态 - 赤陶 */
+  --c5: #6a5a7a;  /* 句型 - 暮紫 */
+  /* 功能色 */
+  --success: #5a7a5e;
+  --warning: #b8860b;
+  --danger: #a0522d;
+  --info: #6b8e9b;
+  /* 向后兼容别名 */
+  --accent2: var(--c2);
+  --accent3: var(--c3);
+  --accent4: var(--c4);
+  --accent5: var(--c5);
+  /* 结构变量 */
+  --code-bg: var(--bg3);
+  --card: var(--bg2);
+  --hover-bg: #ede1d2;
+  --sidebar-bg: var(--bg2);
+  --shadow: none;
+  --shadow-lg: 0 2px 16px rgba(45,36,24,.08);
+  --radius: 6px;
+  --radius-sm: 4px;
+  --sidebar-width: 260px;
+  --topbar-height: 64px;
+  --mark-bg: #f0e0c0;
+  --mark-text: #6b4d1e;
+  --scrollbar-thumb: #c4b49a;
+  --scrollbar-track: transparent;
+}
+
+[data-theme="dark"] {
+  --bg: #141210;
+  --bg2: #1c1917;
+  --bg3: #292524;
+  --text: #e8ddd0;
+  --text2: #a09080;
+  --text3: #786858;
+  --border: #3a302a;
+  --accent: #c49a6c;
+  --link: #c49a6c;
+  --link-hover: #d4aa7c;
+  --c1: #9a8f7d;
+  --c2: #ab8f67;
+  --c3: #7a9a7e;
+  --c4: #aa7c5a;
+  --c5: #8a7a9a;
+  --success: #7a9a7e;
+  --warning: #d4a61b;
+  --danger: #c0622d;
+  --info: #8baebb;
+  --accent2: var(--c2);
+  --accent3: var(--c3);
+  --accent4: var(--c4);
+  --accent5: var(--c5);
+  --code-bg: var(--bg3);
+  --card: var(--bg2);
+  --hover-bg: #2e2824;
+  --sidebar-bg: var(--bg2);
+  --shadow: none;
+  --shadow-lg: 0 2px 16px rgba(0,0,0,.35);
+  --mark-bg: #4a3a1a;
+  --mark-text: #e0c87a;
+  --scrollbar-thumb: #4a403a;
+  --scrollbar-track: #1c1917;
+}
+
+/* ================================================================
+   Base Reset
+   ================================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--topbar-height) + env(safe-area-inset-top, 0px)); /* #1: 安全区域适配 */
+  -webkit-text-size-adjust: 100%; /* #7: 禁止 iOS Safari 自动缩放字体 */
+  text-size-adjust: 100%;
+}
+
+/* #5: 消除移动端 300ms 点击延迟 */
+button, a, .sidebar-toggle, .sidebar-item,
+.detail-toggle, .case-row, .gojuon-toggle,
+.gojuon-autoplay, .bookmark-btn, .copy-btn,
+.search-dropdown-item, .search-dropdown-history-item,
+.nav-card, .back-to-top, .furigana-toggle, .theme-toggle {
+  touch-action: manipulation;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+body {
+  font-family: "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  transition: background .3s, color .3s;
+  -webkit-tap-highlight-color: transparent; /* #4: 消除移动端点击蓝色高亮 */
+  overscroll-behavior: contain; /* #6: 防 iOS rubber band 滚动穿透 */
+}
+
+/* #6: 侧边栏打开时禁止 body 滚动 */
+body.sidebar-open { overflow: hidden; }
+
+/* 标题使用衬线体 */
+h1, h2, h3, .sec h2, .header h1 {
+  font-family: "Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",serif;
+  letter-spacing: .05em;
+}
+
+/* 日文使用明朝体 */
+.jp, .jp-inline, .jpex, .tbl td:not(.cn), .gojuon-grid .gc {
+  font-family: "Noto Serif JP","Hiragino Mincho ProN","Yu Mincho","MS Mincho",serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+/* ================================================================
+   Top Bar
+   ================================================================ */
+.topbar {
+  position: sticky; top: 0; z-index: 200;
+  height: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 20px;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+  transition: background .3s, border-color .3s;
+}
+
+/* Hamburger */
+.hamburger {
+  display: none;
+  background: none; border: none; cursor: pointer;
+  padding: 6px; color: var(--text);
+  flex-shrink: 0;
+}
+.hamburger svg { width: 22px; height: 22px; }
+
+/* Logo area */
+.topbar-logo {
+  font-family: "Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+  font-weight: 600; font-size: 1.05em; color: var(--accent);
+  white-space: nowrap; flex-shrink: 0;
+  letter-spacing: .05em;
+}
+
+/* Search */
+.search-wrap {
+  flex: 1; max-width: 480px; position: relative;
+  margin: 0 auto;
+}
+.search-wrap input {
+  width: 100%; height: 38px; padding: 0 44px 0 16px;
+  border: 1.5px solid var(--border); border-radius: 20px;
+  background: var(--bg); color: var(--text);
+  font-size: .88em; outline: none;
+  transition: border-color .25s, box-shadow .25s, background .3s;
+}
+.search-wrap input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(166,139,91,.15);
+}
+.search-wrap input::placeholder { color: var(--text3); }
+.search-icon {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text3); pointer-events: none;
+}
+.search-clear {
+  position: absolute; right: 36px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: var(--text3); font-size: 1.1em; display: none;
+  line-height: 1; padding: 2px 4px;
+}
+.search-clear.visible { display: block; }
+.search-count {
+  position: absolute; right: 0; top: calc(100% + 4px);
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: .75em;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  line-height: 1.4;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(-4px) scale(.9);
+  transition: opacity .25s, transform .25s;
+  pointer-events: none;
+  z-index: 1;
+}
+.search-count.visible { opacity: 1; transform: translateY(0) scale(1); }
+
+/* Search Dropdown */
+.search-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  max-height: 340px;
+  overflow-y: auto;
+  z-index: 300;
+  display: none;
+  transition: background .3s, border-color .3s;
+}
+.search-dropdown.open { display: block; }
+.search-dropdown-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background .15s;
+  font-size: .86em;
+  line-height: 1.4;
+}
+.search-dropdown-item:last-child { border-bottom: none; }
+.search-dropdown-item:hover,
+.search-dropdown-item.active { background: var(--hover-bg); }
+.search-dropdown-item .sdi-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8em; font-weight: 700;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--text3) 12%, transparent);
+  color: var(--text3);
+}
+.sdi-icon.sdi-sec0 { background: color-mix(in srgb, var(--text3) 12%, transparent); color: var(--text3); }
+.sdi-icon.sdi-sec1 { background: color-mix(in srgb, var(--c1) 15%, transparent); color: var(--c1); }
+.sdi-icon.sdi-sec2 { background: color-mix(in srgb, var(--c2) 15%, transparent); color: var(--c2); }
+.sdi-icon.sdi-sec3 { background: color-mix(in srgb, var(--c3) 15%, transparent); color: var(--c3); }
+.sdi-icon.sdi-sec4 { background: color-mix(in srgb, var(--c4) 15%, transparent); color: var(--c4); }
+.sdi-icon.sdi-sec5 { background: color-mix(in srgb, var(--c5) 15%, transparent); color: var(--c5); }
+.search-dropdown-item .sdi-body { flex: 1; min-width: 0; }
+.search-dropdown-item .sdi-title { font-weight: 600; color: var(--text); }
+.search-dropdown-item .sdi-path { font-size: .78em; color: var(--text3); }
+.search-dropdown-item .sdi-snippet { font-size: .78em; color: var(--text2); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-dropdown-empty,
+.search-dropdown-history-label {
+  padding: 14px 16px;
+  font-size: .82em;
+  color: var(--text3);
+  text-align: center;
+}
+.search-dropdown-history-label { text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); padding: 10px 16px; }
+.search-dropdown-history-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: .84em;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background .15s;
+}
+.search-dropdown-history-item:hover { background: var(--hover-bg); }
+.search-dropdown-history-item .sh-del {
+  background: none; border: none;
+  color: var(--text3); cursor: pointer;
+  font-size: 1.1em; padding: 2px 4px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.search-dropdown-history-item:hover .sh-del { opacity: 1; }
+
+/* Progress Bar */
+.progress-bar {
+  position: fixed; top: calc(var(--topbar-height) + env(safe-area-inset-top, 0px)); left: 0; right: 0;
+  height: 3px;
+  background: var(--border);
+  z-index: 199;
+  transition: background .3s;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--c2));
+  width: 0%;
+  transition: width .1s linear;
+}
+
+
+/* Theme toggle */
+.theme-toggle {
+  background: none; border: 1.5px solid var(--border); border-radius: 20px;
+  cursor: pointer; padding: 6px 10px;
+  color: var(--text2); display: flex; align-items: center; gap: 4px;
+  font-size: .82em; white-space: nowrap; flex-shrink: 0;
+  transition: all .2s;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ================================================================
+   Layout
+   ================================================================ */
+.app-layout {
+  display: flex;
+  min-height: calc(100vh - var(--topbar-height) - env(safe-area-inset-top, 0px));
+}
+
+/* ================================================================
+   Sidebar
+   ================================================================ */
+.sidebar {
+  position: sticky; top: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
+  width: var(--sidebar-width); height: calc(100vh - var(--topbar-height) - env(safe-area-inset-top, 0px));
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; overflow-x: hidden;
+  flex-shrink: 0;
+  padding: 16px 0 24px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  transition: background .3s, border-color .3s, transform .3s;
+  z-index: 150;
+}
+.sidebar-title {
+  font-size: .78em; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .06em;
+  padding: 0 20px 10px;
+  margin-bottom: 6px;
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 20px;
+  font-size: .88em; font-weight: 500;
+  color: var(--text2); cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all .15s;
+  text-decoration: none;
+}
+.sidebar-item:hover {
+  color: var(--accent); background: var(--hover-bg);
+  border-left-color: var(--accent);
+}
+.sidebar-item.active {
+  color: var(--accent); background: var(--hover-bg);
+  border-left-color: var(--accent); font-weight: 600;
+}
+.sidebar-item .sico {
+  width: 26px; height: 26px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-size: .7em; flex-shrink: 0; font-weight: 700;
+}
+.sidebar-sub {
+  padding-left: 46px;
+  font-size: .82em; padding-top: 6px; padding-bottom: 6px;
+}
+.sidebar-sub .sico { width: 20px; height: 20px; font-size: .62em; border-radius: 4px; }
+
+/* Sidebar toggle (sub-groups) */
+.sidebar-group {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px; margin-bottom: 6px;
+}
+.sidebar-group:last-child { border-bottom: none; }
+.sidebar-toggle {
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; padding: 8px 20px;
+  background: none; border: none; cursor: pointer;
+  font-size: .86em; font-weight: 600; color: var(--text);
+  text-align: left; transition: color .15s;
+}
+.sidebar-toggle:hover { color: var(--accent); }
+.sidebar-toggle .arrow {
+  font-size: .7em; transition: transform .25s;
+  color: var(--text3); margin-left: auto;
+}
+.sidebar-toggle.open .arrow { transform: rotate(90deg); }
+.sidebar-children {
+  overflow: hidden; max-height: 0;
+  transition: max-height .35s ease;
+}
+.sidebar-children.open { max-height: 800px; }
+
+/* Sidebar overlay (mobile) */
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  z-index: 140;
+}
+.sidebar-overlay.visible { display: block; }
+
+/* ================================================================
+   Main Content
+   ================================================================ */
+.main-content {
+  flex: 1; overflow-x: hidden;
+  padding: 0 32px 80px;
+  padding-bottom: max(80px, calc(env(safe-area-inset-bottom) + 48px));
+  max-width: 960px;
+}
+
+/* Header */
+.header {
+  text-align: center; padding: 48px 0 36px;
+  border-bottom: 2px solid var(--border); margin-bottom: 40px;
+  transition: border-color .3s;
+}
+.header h1 {
+  font-family: "Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",serif;
+  font-size: 1.75rem; font-weight: 600; color: var(--text);
+  letter-spacing: .05em;
+}
+.header h1::after {
+  content: '';
+  display: block;
+  width: 60px; height: 3px;
+  background: var(--accent);
+  margin: .75rem auto 0;
+}
+.header .sub { color: var(--text2); font-size: .92em; margin-top: 6px; }
+.header .tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+.tag {
+  font-size: .76em; padding: 3px 12px; border-radius: 20px;
+  font-weight: 600;
+}
+.tag-t1 { background: #ede4d8; color: #7a6f5d; }
+[data-theme="dark"] .tag-t1 { background: #2e2620; color: #b0a590; }
+.tag-t2 { background: #e8dcc8; color: #8b6f47; }
+[data-theme="dark"] .tag-t2 { background: #2e2418; color: #c4a97a; }
+.tag-t3 { background: #e0ebe2; color: var(--c3); }
+[data-theme="dark"] .tag-t3 { background: #1a2a1e; color: #8aba8e; }
+.tag-t4 { background: #e8dcd0; color: #8a5c3a; }
+[data-theme="dark"] .tag-t4 { background: #2a1c10; color: #c4986a; }
+.tag-t5 { background: #e4dee8; color: #6a5a7a; }
+[data-theme="dark"] .tag-t5 { background: #1e1a28; color: #a090b8; }
+
+/* Section */
+.sec { scroll-margin-top: calc(var(--topbar-height) + env(safe-area-inset-top, 0px) + 8px); margin-bottom: 48px; }
+.sec h2 {
+  font-family: "Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",serif;
+  font-size: 1.5rem; font-weight: 600; letter-spacing: .05em;
+  color: var(--text);
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px;
+  padding-left: 12px;
+  border-left: 4px solid var(--c1);
+}
+.sec h2 .ico {
+  width: 32px; height: 32px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #fff; font-size: .75em; flex-shrink: 0;
+}
+.sec h2 .h2-layer {
+  display: inline-block; vertical-align: middle;
+  padding: 2px 9px; border-radius: 10px;
+  font-size: .5em; font-weight: 600; color: #fff;
+  letter-spacing: .03em; font-family: "Noto Sans SC","Microsoft YaHei",sans-serif;
+}
+@media (max-width: 480px) {
+  .sec h2 .h2-layer { font-size: .45em; padding: 2px 7px; }
+}
+.sec h3 {
+  font-family: "Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",serif;
+  font-size: 1.25rem; font-weight: 600; letter-spacing: .05em;
+  color: var(--text); margin: 28px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: calc(var(--topbar-height) + env(safe-area-inset-top, 0px) + 8px);
+}
+.sec h4 {
+  font-family: "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  font-size: 1.1rem; font-weight: 500;
+  color: var(--text); margin: 18px 0 8px;
+}
+.sec .desc { color: var(--text2); font-size: .92em; margin-bottom: 24px; line-height: 1.7; }
+
+/* Bookmark */
+.bookmark-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.1em; padding: 2px 6px; margin-left: auto;
+  color: var(--text3); transition: color .2s, transform .2s;
+  flex-shrink: 0; line-height: 1;
+}
+.bookmark-btn:hover { color: #8b6f47; transform: scale(1.2); }
+.bookmark-btn.bookmarked { color: #8b6f47; }
+.sidebar-favs { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.sidebar-favs .sidebar-title { color: #8b6f47; }
+.sidebar-fav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 20px; font-size: .82em;
+  color: var(--text2); cursor: pointer;
+  text-decoration: none; transition: color .15s;
+}
+.sidebar-fav-item:hover { color: #8b6f47; }
+.sidebar-fav-item .fav-star { color: #8b6f47; font-size: .85em; flex-shrink: 0; }
+.sidebar-fav-empty {
+  padding: 6px 20px; font-size: .78em; color: var(--text3);
+  font-style: italic;
+}
+
+/* ===== Collapsible Detail Panels ===== */
+.detail-toggle {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: none; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 6px 16px; font-size: .84em; color: var(--text2);
+  cursor: pointer; margin: 4px 0 12px; transition: all .2s;
+  font-family: inherit;
+}
+.detail-toggle:hover { border-color: var(--c2); color: var(--c2); background: var(--hover-bg); }
+.detail-toggle .arrow { display: inline-block; transition: transform .3s; font-size: .75em; }
+.detail-toggle.expanded .arrow { transform: rotate(90deg); }
+
+.detail-panel {
+  max-height: 0; overflow: hidden;
+  transition: max-height .4s ease, margin .4s ease, padding .4s ease;
+  background: var(--bg2); border-radius: var(--radius);
+  border-left: 3px solid var(--c2);
+  margin: 0 0 0 4px; padding: 0 20px;
+}
+.detail-panel.open { max-height: 3000px; margin: 8px 0 16px 4px; padding: 18px 20px; }
+.detail-panel h4 {
+  font-size: .88em; color: var(--text); margin: 0 0 8px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.detail-panel p, .detail-panel li { font-size: .85em; color: var(--text2); line-height: 1.7; margin: 0 0 6px; }
+.detail-panel ul { margin: 4px 0 10px; padding-left: 18px; }
+.detail-panel li { margin-bottom: 3px; }
+.detail-panel .jp-inline { font-size: .95em; color: var(--text); }
+.detail-panel .warn {
+  display: block; background: #f5ebe0; border-left: 3px solid var(--warning);
+  padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 10px 0;
+  font-size: .86em; color: #7a5010;
+}
+[data-theme="dark"] .detail-panel .warn { background: #2a2014; color: #e0c060; }
+.detail-panel .tip {
+  display: block; background: #e8ede5; border-left: 3px solid var(--success);
+  padding: 10px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin: 10px 0;
+  font-size: .86em; color: #3a5a3e;
+}
+[data-theme="dark"] .detail-panel .tip { background: #1a241e; color: #8aba8e; }
+
+/* Table */
+.tbl-wrap { overflow-x: auto; margin: 12px 0 20px; position: relative; }
+.tbl-wrap:hover .copy-btn { opacity: 1; }
+.tbl { width: 100%; border-collapse: collapse; font-size: .88em; }
+.tbl thead th {
+  background: var(--bg3); font-weight: 600; font-size: .8em;
+  color: var(--text2); text-transform: uppercase; letter-spacing: .04em;
+  padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border);
+}
+.tbl td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  font-family: "Noto Serif JP","Hiragino Mincho ProN","Yu Mincho","MS Mincho",serif;
+}
+.tbl td.cn { font-family: "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif; color: var(--text2); font-size: .92em; }
+.tbl tr:nth-child(odd) td { background: rgba(246,241,235,.5); }
+[data-theme="dark"] .tbl tr:nth-child(odd) td { background: rgba(28,25,23,.5); }
+.tbl tr:hover td { background: var(--hover-bg); }
+.tbl .hl td { background: var(--bg3); font-weight: 600; }
+[data-theme="dark"] .tbl .hl td { background: var(--bg3); }
+.tbl { border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
+
+/* Copy Button */
+.copy-btn {
+  position: absolute; top: 6px; right: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 4px; padding: 3px 8px;
+  font-size: .72em; color: var(--text3); cursor: pointer;
+  opacity: 0; transition: opacity .2s, color .2s;
+  z-index: 5;
+}
+.copy-btn:hover { color: var(--accent); }
+.copy-btn.copied { color: var(--accent3); }
+
+/* ================================================================
+   Furigana System
+   ================================================================ */
+/* Toggle Button */
+.furigana-toggle {
+  display: flex; align-items: center; gap: 5px;
+  background: none; border: 1px solid var(--border);
+  border-radius: 18px; padding: 5px 12px;
+  cursor: pointer; color: var(--text2);
+  font-size: .82em; font-weight: 600;
+  transition: all .2s; white-space: nowrap;
+  flex-shrink: 0; user-select: none;
+  min-height: 36px;
+}
+.furigana-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.furigana-toggle .ft-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text3); transition: background .2s;
+}
+.furigana-toggle[data-mode="on"] .ft-dot { background: var(--success); }
+.furigana-toggle[data-mode="off"] .ft-dot { background: var(--text3); }
+.furigana-toggle[data-mode="touch"] .ft-dot { background: var(--warning); }
+
+/* Ruby base styling */
+.jp ruby, .jp-inline ruby, .jpex ruby {
+  ruby-align: center;
+}
+.jp rt, .jp-inline rt, .jpex rt {
+  font-size: .55em;
+  color: var(--text3);
+  font-weight: 400;
+  transition: opacity .15s;
+}
+
+/* Mode: ON — always show */
+[data-furigana="on"] .jp rt,
+[data-furigana="on"] .jp-inline rt,
+[data-furigana="on"] .jpex rt { opacity: 1; }
+
+/* Mode: OFF — always hide */
+[data-furigana="off"] .jp rt,
+[data-furigana="off"] .jp-inline rt,
+[data-furigana="off"] .jpex rt { display: none; }
+
+/* Mode: TOUCH — show on demand */
+[data-furigana="touch"] .jp rt,
+[data-furigana="touch"] .jp-inline rt,
+[data-furigana="touch"] .jpex rt { opacity: 0; }
+[data-furigana="touch"] .jp.show-furigana rt,
+[data-furigana="touch"] .jp-inline.show-furigana rt,
+[data-furigana="touch"] .jpex.show-furigana rt { opacity: 1; }
+@media (hover: hover) {
+  [data-furigana="touch"] .jp:hover rt,
+  [data-furigana="touch"] .jp-inline:hover rt,
+  [data-furigana="touch"] .jpex:hover rt { opacity: 1; }
+}
+
+/* Card */
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px 28px;
+  margin: 20px 0;
+  transition: background .3s, border-color .3s;
+}
+.card-title { font-weight: 700; font-size: .95em; color: var(--accent); margin-bottom: 12px; }
+
+/* Rule box */
+.rule {
+  background: var(--bg3);
+  border-left: 3px solid var(--c1);
+  border-radius: var(--radius-sm); padding: 16px 20px; margin: 16px 0;
+  font-size: .92em; transition: background .3s;
+}
+[data-theme="dark"] .rule {
+  background: var(--bg3);
+}
+.rule strong { color: #5a4f3d; }
+[data-theme="dark"] .rule strong { color: #c0b090; }
+.rule.jp { font-family: "Noto Serif JP","Hiragino Mincho ProN","Yu Mincho","MS Mincho",serif; }
+
+/* Framework Diagram (dP·vP·cP) */
+.fw-diagram {
+  margin: 20px 0 8px;
+  font-size: .85em;
+}
+.fw-layer {
+  border-radius: var(--radius); padding: 14px 16px;
+  text-align: center; position: relative;
+}
+.fw-layer-label {
+  font-family: "Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+  font-weight: 700; font-size: 1.05em; margin-bottom: 4px;
+}
+.fw-layer-desc {
+  font-size: .88em; color: var(--text3);
+}
+.fw-cp {
+  background: color-mix(in srgb, var(--c5) 8%, var(--bg));
+  border: 2px solid color-mix(in srgb, var(--c5) 30%, transparent);
+  padding: 18px 14px 14px;
+}
+.fw-cp > .fw-layer-label { color: var(--c5); }
+.fw-vp {
+  background: color-mix(in srgb, var(--c2) 10%, var(--bg));
+  border: 2px solid color-mix(in srgb, var(--c2) 30%, transparent);
+  margin: 12px 10px 8px; padding: 14px 12px 12px;
+}
+.fw-vp > .fw-layer-label { color: var(--c2); }
+.fw-core {
+  background: color-mix(in srgb, var(--c2) 18%, var(--bg));
+  border: 2px dashed color-mix(in srgb, var(--c2) 40%, transparent);
+  margin: 10px 20px 4px; padding: 10px;
+}
+.fw-core > .fw-layer-label { color: #8b6f47; font-size: .9em; }
+.fw-dp {
+  background: color-mix(in srgb, var(--c3) 8%, var(--bg));
+  border: 2px solid color-mix(in srgb, var(--c3) 25%, transparent);
+  margin: 6px 10px 10px; padding: 10px;
+}
+.fw-dp > .fw-layer-label { color: var(--c3); }
+@media (max-width: 480px) {
+  .fw-diagram { font-size: .78em; }
+  .fw-vp { margin: 10px 4px 6px; }
+  .fw-core { margin: 8px 10px 4px; }
+  .fw-dp { margin: 4px 4px 8px; }
+}
+
+/* Formula */
+.formula {
+  display: inline-block;
+  background: #3d3020; color: #f6f1eb;
+  padding: 4px 10px; border-radius: var(--radius-sm);
+  font-family: "Crimson Pro","Consolas","Menlo",monospace;
+  font-size: .85em; margin: 2px 0;
+}
+[data-theme="dark"] .formula { background: #c4b49a; color: #1c1917; }
+.formula-box {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 24px; margin: 18px 0;
+  transition: background .3s;
+}
+.formula-box .fl { margin: 6px 0; font-family: "Crimson Pro","Consolas","Menlo",monospace; font-size: .88em; }
+.formula-box .fl .arrow { color: var(--accent); margin: 0 6px; }
+.formula-box .fl .jp { font-family: "Noto Serif JP","Hiragino Mincho ProN","Yu Mincho","MS Mincho",serif; color: var(--text); }
+
+/* Grid */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Footer */
+.footer {
+  text-align: center; padding: 36px 0; color: var(--text2);
+  font-size: .82em; border-top: 1px solid var(--border); margin-top: 20px;
+  padding-bottom: max(36px, calc(env(safe-area-inset-bottom) + 12px));
+  transition: border-color .3s;
+}
+
+/* ================================================================
+   Search Highlight
+   ================================================================ */
+.search-highlight {
+  background: var(--mark-bg); color: var(--mark-text);
+  border-radius: 2px; padding: 0 1px;
+}
+.section-hidden { display: none !important; }
+
+/* ================================================================
+   Back to Top
+   ================================================================ */
+.back-to-top {
+  position: fixed; bottom: 32px; right: 32px; z-index: 100;
+  bottom: max(32px, calc(env(safe-area-inset-bottom) + 16px));
+  right: max(32px, calc(env(safe-area-inset-right) + 16px));
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--accent); color: #fff; border: none;
+  cursor: pointer; font-size: 1.2em;
+  box-shadow: var(--shadow-lg); opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  transition: opacity .3s, transform .3s;
+  display: flex; align-items: center; justify-content: center;
+}
+.back-to-top.visible {
+  opacity: 1; transform: translateY(0);
+  pointer-events: auto;
+}
+.back-to-top:hover { filter: brightness(1.1); }
+
+/* ================================================================
+   Responsive — 移动端全面优化
+   ================================================================ */
+
+/* --- 触控目标增强（全局） --- */
+@media (max-width: 768px) {
+  .detail-toggle { min-height: 44px; padding: 10px 16px; font-size: .9em; }
+  .detail-toggle .arrow { font-size: .85em; }
+  .bookmark-btn { width: 36px; height: 36px; font-size: 1.1em; }
+  .case-row td { padding: 10px 8px; }
+  .case-row td:first-child::before { font-size: .7em; }
+  .gojuon-toggle { min-height: 40px; padding: 8px 14px; font-size: .85em; }
+  .sidebar-item, .sidebar-toggle { min-height: 42px; padding: 10px 14px; }
+  .back-to-top { width: 44px; height: 44px; font-size: 1.2em; }
+  .usage-guide-close { width: 32px; height: 32px; font-size: 1.1em; }
+}
+
+/* --- 768px 断点 --- */
+@media (max-width: 768px) {
+  /* 侧边栏 */
+  .sidebar {
+    position: fixed; top: calc(var(--topbar-height) + env(safe-area-inset-top, 0px)); left: 0; bottom: 0;
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg); z-index: 160;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .hamburger { display: block; }
+
+  .main-content { padding: 0 16px 80px; }
+
+  /* 页头 */
+  .header { padding: 28px 0 20px; margin-bottom: 24px; }
+  .header h1 { font-size: 1.5rem; }
+
+  /* 阅读体验 */
+  body { font-size: 1.02em; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+  h4 { font-size: 1rem; }
+  p, li { line-height: 1.8; }
+  .desc { font-size: .95em; line-height: 1.7; }
+  .rule { padding: 14px 16px; font-size: .92em; line-height: 1.7; }
+  .card { padding: 16px 18px; }
+  .card-title { font-size: .95em; }
+  .tip, .warn { padding: 12px 14px; font-size: .88em; }
+  .gojuon-wrap { padding: 14px 16px; margin: 16px 0 12px; }
+  .gojuon-tip { font-size: .82em; padding: 8px 10px; }
+  .sec { margin-bottom: 32px; }
+  .sec h2 { font-size: 1.25rem; margin-bottom: 12px; padding-left: 10px; }
+  .sec h3 { font-size: 1.1rem; margin: 20px 0 10px; }
+  .sec .desc { margin-bottom: 16px; }
+
+  /* 网格单列 */
+  .grid2 { grid-template-columns: 1fr; }
+
+  /* 搜索 */
+  .search-wrap { max-width: none; }
+  .back-to-top { right: 16px; bottom: 24px; }
+
+  /* 粘性横幅压缩 */
+  .usage-guide {
+    padding: 10px 12px;
+    font-size: .82em;
+    gap: 8px;
+    top: 4px;
+    border-radius: 6px;
+  }
+  .usage-guide-icon { width: 30px; height: 30px; font-size: 1.2em; }
+
+  /* 表格横向滚动 */
+  .tbl-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+  }
+  .tbl-wrap::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 24px;
+    background: linear-gradient(to right, transparent, var(--card));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .tbl-wrap.scrollable::after { opacity: 1; }
+  [data-theme="dark"] .tbl-wrap::after {
+    background: linear-gradient(to right, transparent, var(--card));
+  }
+  .tbl { min-width: 100%; white-space: nowrap; }
+  .tbl th, .tbl td { padding: 8px 10px; font-size: .86em; }
+  .copy-btn { opacity: .6; } /* Mobile: always visible */
+
+  /* 50音图移动适配 */
+  .gojuon-grid {
+    grid-template-columns: 36px repeat(5, 1fr);
+    gap: 1px;
+  }
+  .gojuon-grid .gh { font-size: .62em; padding: 3px 1px; }
+  .gojuon-grid .gr { font-size: .62em; padding: 3px 1px; }
+  .gojuon-grid .gc {
+    font-size: .76em;
+    padding: 2px 1px;
+    line-height: 1.4;
+  }
+  .gojuon-grid .gc.hl .tag { font-size: .46em; }
+  .gojuon-toggles { gap: 5px; }
+  .gojuon-legend { font-size: .78em; padding: 10px 12px; }
+}
+
+/* --- 480px 断点 --- */
+@media (max-width: 480px) {
+  :root { --topbar-height: 52px; }
+  .topbar { padding: 0 10px; gap: 6px; height: 52px; }
+  .topbar-logo { font-size: .85em; }
+  .furigana-toggle { font-size: .75em; padding: 4px 8px; min-height: 32px; }
+  .furigana-toggle .ft-dot { width: 6px; height: 6px; }
+  .theme-toggle span { display: none; }
+  .search-wrap input { font-size: 16px; padding: 6px 36px 6px 10px; } /* #2: 16px 防 iOS 自动缩放 */
+
+  .main-content { padding: 0 12px 70px; }
+  .header { padding: 22px 0 16px; }
+  .header h1 { font-size: 1.25rem; }
+
+  /* 阅读体验加强 */
+  body { font-size: 1.04em; }
+  h2 { font-size: 1.18rem; }
+  h3 { font-size: 1.05rem; }
+  p, li { line-height: 1.8; }
+  .rule { padding: 12px 14px; font-size: .9em; }
+  .sec { margin-bottom: 24px; }
+
+  /* 50音图进一步紧凑 */
+  .gojuon-grid {
+    grid-template-columns: 28px repeat(5, 1fr);
+  }
+  .gojuon-grid .gc { font-size: .7em; }
+  .gojuon-grid .gc.hl .tag { font-size: .4em; letter-spacing: 0; }
+  .gojuon-toggle { padding: 6px 10px; font-size: .78em; border-radius: 14px; }
+  .gojuon-autoplay { padding: 4px 10px; font-size: .76em; margin-left: 2px; } /* #3: 移动端压缩自动演示按钮 */
+
+  /* 粘性横幅更小 */
+  .usage-guide { font-size: .78em; padding: 8px 10px; top: 2px; gap: 6px; }
+  .usage-guide-icon { width: 26px; height: 26px; font-size: 1em; }
+
+  /* 表格更紧凑 */
+  .tbl th, .tbl td { padding: 6px 8px; font-size: .8em; }
+
+  /* 格助词详情优化 */
+  .case-detail-inner .usages { grid-template-columns: 1fr; }
+  .case-detail-inner { font-size: .82em; }
+
+  /* 网格卡片全屏宽 */
+  .grid2 { gap: 8px; }
+}
+
+/* ================================================================
+   50音图 × 动词变形
+   ================================================================ */
+.gojuon-wrap {
+  margin: 22px 0 16px;
+  padding: 20px 22px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: background .3s, border-color .3s;
+}
+.gojuon-title {
+  font-size: .92em;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.gojuon-title .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.gojuon-toggles {
+  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.gojuon-toggle {
+  padding: 5px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--text2);
+  font-size: .82em;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.gojuon-toggle:hover { border-color: var(--c2); color: var(--c2); }
+.gojuon-toggle.active { background: var(--c2); color: #fff; border-color: var(--c2); }
+.gojuon-grid {
+  display: grid;
+  grid-template-columns: 50px repeat(5, 1fr);
+  gap: 2px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.gojuon-grid .gh {
+  padding: 5px 2px;
+  font-size: .7em;
+  color: var(--text3);
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.gojuon-grid .gr {
+  padding: 5px 2px;
+  font-size: .7em;
+  color: var(--text3);
+  font-weight: 600;
+  text-align: right;
+  line-height: 2.2;
+}
+.gojuon-grid .gc {
+  padding: 3px;
+  font-size: .88em;
+  border-radius: 4px;
+  transition: all .25s;
+  color: var(--text3);
+  opacity: .35;
+  line-height: 1.5;
+  cursor: default;
+}
+.gojuon-grid .gc.hl {
+  font-weight: 700;
+  opacity: 1;
+  padding: 2px 3px 0;
+}
+.gojuon-grid .gc.hl .tag {
+  display: block;
+  font-size: .52em;
+  font-weight: 400;
+  line-height: 1;
+  margin-bottom: 1px;
+  letter-spacing: .01em;
+}
+.gojuon-grid .gc.godan   { background: rgba(139,111,71,.08); color: #8b6f47; border: 1.5px solid rgba(139,111,71,.25); }
+.gojuon-grid .gc.ichidan { background: rgba(90,122,94,.08);  color: #5a7a5e; border: 1.5px solid rgba(90,122,94,.25); }
+.gojuon-grid .gc.sahen   { background: rgba(138,92,58,.08);  color: #8a5c3a; border: 1.5px solid rgba(138,92,58,.25); }
+.gojuon-grid .gc.kahen   { background: rgba(106,90,122,.08); color: #6a5a7a; border: 1.5px solid rgba(106,90,122,.25); }
+[data-theme="dark"] .gojuon-grid .gc.godan   { background: rgba(171,143,103,.18); color: #c4a97a; border-color: rgba(171,143,103,.38); }
+[data-theme="dark"] .gojuon-grid .gc.ichidan { background: rgba(122,154,126,.18);  color: #8aba8e; border-color: rgba(122,154,126,.38); }
+[data-theme="dark"] .gojuon-grid .gc.sahen   { background: rgba(170,124,90,.18);  color: #c4986a; border-color: rgba(170,124,90,.38); }
+[data-theme="dark"] .gojuon-grid .gc.kahen   { background: rgba(138,122,154,.18); color: #a090b8; border-color: rgba(138,122,154,.38); }
+.gojuon-legend {
+  padding: 11px 15px;
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  font-size: .84em;
+  line-height: 1.7;
+  color: var(--text2);
+  min-height: 32px;
+  transition: background .3s;
+}
+.gojuon-legend b { color: var(--text); }
+.gojuon-tip {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  font-size: .78em;
+  color: var(--text3);
+  line-height: 1.6;
+}
+
+/* --- 自动演示按钮 --- */
+.gojuon-autoplay {
+  padding: 5px 14px;
+  border: 1.5px dashed var(--accent);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--accent);
+  font-size: .82em;
+  cursor: pointer;
+  transition: all .25s;
+  font-family: inherit;
+  white-space: nowrap;
+  margin-left: 4px;
+}
+.gojuon-autoplay:hover { background: rgba(166,139,91,.1); }
+.gojuon-autoplay.playing {
+  background: var(--accent);
+  color: #fff;
+  border-style: solid;
+}
+
+/* --- 单元格弹出动画 --- */
+@keyframes gojuonPopIn {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.gojuon-grid .gc.hl.anim-step {
+  animation: gojuonPopIn .45s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+/* 步进数字标记（自动演示时用） */
+.gojuon-grid .gc.hl.anim-step .step-num {
+  display: inline-block;
+  font-size: .55em;
+  font-weight: 700;
+  color: inherit;
+  opacity: .7;
+  margin-right: 2px;
+}
+
+/* ================================================================
+   格助词 — 行内展开
+   ================================================================ */
+.case-tbl { table-layout: auto; }
+.case-tbl tbody .case-row {
+  cursor: pointer;
+  transition: background .2s;
+  position: relative;
+}
+.case-tbl tbody .case-row:hover { background: rgba(0,0,0,.03); }
+[data-theme="dark"] .case-tbl tbody .case-row:hover { background: rgba(255,255,255,.04); }
+.case-tbl .case-row td:first-child::before {
+  content: '▶';
+  font-size: .6em;
+  margin-right: 4px;
+  transition: transform .25s;
+  display: inline-block;
+  vertical-align: middle;
+  color: var(--text3);
+}
+.case-tbl .case-row.open td:first-child::before {
+  transform: rotate(90deg);
+}
+.case-row td { vertical-align: middle; }
+.case-detail { display: none; }
+.case-detail.open { display: table-row; }
+.case-detail td {
+  padding: 0 !important;
+  border-top: none;
+}
+.case-detail-inner {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .45s ease, padding .35s ease;
+  padding: 0 24px;
+  background: var(--bg3);
+  border-left: 3px solid var(--c3);
+  font-size: .86em;
+  line-height: 1.75;
+  color: var(--text2);
+}
+.case-detail.open .case-detail-inner {
+  max-height: 1400px;
+  padding: 18px 24px 20px 24px;
+}
+.case-detail-inner h5 {
+  font-family: "Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+  font-size: 1.02em;
+  margin: 0 0 8px;
+  color: var(--text);
+  letter-spacing: .03em;
+}
+.case-detail-inner h5 .particle {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  margin-right: 6px;
+  font-size: 1.15em;
+  font-weight: 700;
+}
+.case-detail-inner .usages { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin: 8px 0 4px; }
+.case-detail-inner .usage-item {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  transition: background .3s;
+}
+.case-detail-inner .usage-item .ulabel { font-size: .78em; font-weight: 700; color: var(--c3); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+.case-detail-inner .usage-item .jpex { font-size: .9em; color: var(--text); }
+.case-detail-inner .case-warn {
+  margin-top: 12px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  background: rgba(184,134,11,.06);
+  border: 1px solid rgba(184,134,11,.18);
+  font-size: .92em;
+  color: var(--text2);
+}
+[data-theme="dark"] .case-detail-inner .case-warn {
+  background: rgba(184,134,11,.1);
+  border-color: rgba(184,134,11,.22);
+}
+.case-detail-inner .case-warn strong { color: #8a6010; }
+[data-theme="dark"] .case-detail-inner .case-warn strong { color: #e0c060; }
+
+/* ================================================================
+   页面使用指南横幅
+   ================================================================ */
+.usage-guide {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 18px;
+  background: var(--bg3);
+  border: 1px dashed #c4b49a;
+  border-radius: var(--radius);
+  font-size: .88em;
+  line-height: 1.55;
+  color: var(--text);
+  position: sticky;
+  top: 8px;
+  z-index: 90;
+  box-shadow: none;
+}
+.usage-guide.hidden { display: none; }
+.usage-guide-icon {
+  font-size: 1.5em;
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(166,139,91,.12);
+  border-radius: 50%;
+}
+.usage-guide-content { flex: 1; }
+.usage-guide-content strong { color: var(--accent); }
+.usage-guide .demo-toggle {
+  display: inline-block;
+  padding: 1px 9px;
+  margin: 0 2px;
+  background: var(--bg2);
+  border: 1.5px solid var(--c2);
+  border-radius: 5px;
+  font-size: .88em;
+  color: var(--c2);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.usage-guide .demo-toggle:hover { background: var(--c2); color: #fff; }
+.usage-guide .demo-toggle .ar { display: inline-block; transition: transform .3s; font-size: .7em; margin-right: 2px; }
+.usage-guide .demo-toggle.expanded .ar { transform: rotate(90deg); }
+.usage-guide-demo {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--bg2);
+  border: 1px dashed var(--c2);
+  border-radius: 6px;
+  font-size: .85em;
+  color: var(--text2);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .4s ease, padding .35s ease, margin .35s ease;
+}
+.usage-guide-demo.open {
+  max-height: 180px;
+  padding: 10px 14px;
+}
+.usage-guide-close {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border: none;
+  background: rgba(0,0,0,.05);
+  border-radius: 50%;
+  font-size: 1em;
+  cursor: pointer;
+  color: var(--text3);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+  line-height: 1;
+}
+.usage-guide-close:hover { background: rgba(0,0,0,.1); color: var(--text); }
+[data-theme="dark"] .usage-guide {
+  background: var(--bg3);
+  border-color: #5a4a3a;
+}
+[data-theme="dark"] .usage-guide-icon { background: rgba(196,154,108,.18); }
+[data-theme="dark"] .usage-guide-close { background: rgba(255,255,255,.06); }
+[data-theme="dark"] .usage-guide-close:hover { background: rgba(255,255,255,.12); }
+
+/* ================================================================
+   导航卡片 & 学习路径
+   ================================================================ */
+.nav-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 20px 0 24px;
+}
+.nav-card {
+  display: block;
+  padding: 16px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .2s;
+  position: relative;
+  overflow: hidden;
+}
+.nav-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
+}
+.nav-card .nc-icon {
+  font-size: 1.6em;
+  margin-bottom: 6px;
+}
+.nav-card .nc-title {
+  font-family: "Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+  font-size: .92em;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+  letter-spacing: .03em;
+}
+.nav-card .nc-sub {
+  font-size: .76em;
+  color: var(--text3);
+  line-height: 1.4;
+}
+.nav-card .nc-bar {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+.learning-path {
+  margin: 20px 0 24px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg3);
+  display: flex; align-items: center; gap: 14px;
+  flex-wrap: wrap;
+  font-size: .86em;
+  color: var(--text2);
+  transition: background .3s, border-color .3s;
+}
+.learning-path .lp-label { font-family: "Noto Serif SC","Source Han Serif SC","Songti SC",serif; font-weight: 600; color: var(--accent); white-space: nowrap; letter-spacing: .03em; }
+.learning-path .lp-step {
+  padding: 4px 14px;
+  border-radius: 14px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  font-size: .9em;
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+}
+.learning-path .lp-step:hover { border-color: var(--accent); color: var(--accent); }
+.learning-path .lp-step.current { background: var(--accent); color: #faf7f2; border-color: var(--accent); }
+.learning-path .lp-arrow { color: var(--text3); font-size: .8em; }
+
+/* Toast */
+.toast-container {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  z-index: 999;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: var(--text);
+  color: var(--bg);
+  padding: 10px 22px;
+  border-radius: 22px;
+  font-size: .85em;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0,0,0,.15);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .25s, transform .25s;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+[data-theme="dark"] .toast { box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+
+/* Mobile: nav cards 2-col */
+@media (max-width: 480px) {
+  .nav-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .nav-card { padding: 12px 14px; }
+  .nav-card .nc-icon { font-size: 1.3em; }
+  .learning-path { gap: 8px; font-size: .78em; padding: 10px 14px; }
+  .learning-path .lp-arrow { display: none; }
+}
+
+/* prefers-reduced-motion：尊重系统偏好，禁用所有过渡与动画 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     Top Bar
+     ================================================================ -->
+<header class="topbar">
+  <button class="hamburger" id="hamburger" aria-label="菜单" title="目录">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+
+  <div class="topbar-logo">日本語文法</div>
+
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="搜索语法点、助词、句型..." autocomplete="off">
+    <button class="search-clear" id="searchClear" title="清除">&times;</button>
+    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <div class="search-count" id="searchCount"></div>
+    <div class="search-dropdown" id="searchDropdown"></div>
+  </div>
+
+  <button class="theme-toggle" id="themeToggle" title="切换暗色模式">
+    <span id="themeIcon">🌙</span> <span id="themeLabel">暗色</span>
+  </button>
+
+  <button class="furigana-toggle" id="furiganaToggle" title="振假名显示模式">
+    <span class="ft-dot"></span> <span id="furiganaLabel">ふりがな</span>
+  </button>
+</header>
+
+<!-- Progress Bar -->
+<div class="progress-bar" id="progressBar"><div class="progress-bar-fill" id="progressBarFill"></div></div>
+
+<!-- ================================================================
+     Layout
+     ================================================================ -->
+<div class="app-layout">
+
+<!-- Sidebar Overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-title">📘 语法框架：三层建造法</div>
+
+  <!-- Sec 0 -->
+  <a href="#sec0" class="sidebar-item" data-nav="sec0">
+    <span class="sico" style="background:var(--accent)">框</span> 三层框架总览
+  </a>
+
+  <!-- vP: 谓语核心层 -->
+  <div class="sidebar-group">
+    <button class="sidebar-toggle" data-group="gvp">
+      <span class="sico" style="background:var(--accent2)">vP</span> 谓语核心层
+      <span class="arrow">▶</span>
+    </button>
+    <div class="sidebar-children" data-group="gvp">
+      <a href="#sec1" class="sidebar-item sidebar-sub" data-nav="sec1">用言（动词·イ形·ナ形）</a>
+      <a href="#sec2-verb" class="sidebar-item sidebar-sub" data-nav="sec2">动词分类·活用体系</a>
+      <a href="#sec2-iadj" class="sidebar-item sidebar-sub" data-nav="sec2">形容词活用</a>
+      <a href="#sec4-tense" class="sidebar-item sidebar-sub" data-nav="sec4">时态（過去·非過去）</a>
+      <a href="#sec4-aspect" class="sidebar-item sidebar-sub" data-nav="sec4">体态（ている·てある）</a>
+      <a href="#sec4-voice" class="sidebar-item sidebar-sub" data-nav="sec4">语态（受身·使役·可能）</a>
+    </div>
+  </div>
+
+  <!-- dP: 限定修饰层 -->
+  <div class="sidebar-group">
+    <button class="sidebar-toggle" data-group="gdp">
+      <span class="sico" style="background:var(--accent3)">dP</span> 限定修饰层
+      <span class="arrow">▶</span>
+    </button>
+    <div class="sidebar-children" data-group="gdp">
+      <a href="#sec1-taigen" class="sidebar-item sidebar-sub" data-nav="sec1">体言（名词·代名·数词）</a>
+      <a href="#sec1-indep" class="sidebar-item sidebar-sub" data-nav="sec1">修饰词（副·连体·接续）</a>
+      <a href="#sec3-case" class="sidebar-item sidebar-sub" data-nav="sec3">格助词体系（10个）</a>
+      <a href="#sec3-topic" class="sidebar-item sidebar-sub" data-nav="sec3">提示·限定助词</a>
+      <a href="#sec5-nominal" class="sidebar-item sidebar-sub" data-nav="sec5">形式名词</a>
+    </div>
+  </div>
+
+  <!-- cP: 句子构建层 -->
+  <div class="sidebar-group">
+    <button class="sidebar-toggle" data-group="gcp">
+      <span class="sico" style="background:var(--accent5)">cP</span> 句子构建层
+      <span class="arrow">▶</span>
+    </button>
+    <div class="sidebar-children" data-group="gcp">
+      <a href="#sec3-topic" class="sidebar-item sidebar-sub" data-nav="sec3">主题标记（は vs が）</a>
+      <a href="#sec5-patterns" class="sidebar-item sidebar-sub" data-nav="sec5">句型分类</a>
+      <a href="#sec3-other" class="sidebar-item sidebar-sub" data-nav="sec3">复句与条件（から·ば）</a>
+      <a href="#sec4-aux" class="sidebar-item sidebar-sub" data-nav="sec4">推测·判断·义务</a>
+      <a href="#sec3-other" class="sidebar-item sidebar-sub" data-nav="sec3">终助词（ね·よ·ぞ）</a>
+      <a href="#sec5-keigo" class="sidebar-item sidebar-sub" data-nav="sec5">敬语体系</a>
+    </div>
+  </div>
+
+  <!-- Favorites -->
+  <div class="sidebar-favs" id="sidebarFavs">
+    <div class="sidebar-title">⭐ 我的收藏</div>
+    <div id="favList"></div>
+  </div>
+</nav>
+
+<!-- ================================================================
+     Main Content
+     ================================================================ -->
+<main class="main-content" id="mainContent">
+
+<!-- ======== Header ======== -->
+<div class="header" id="top">
+  <h1>日本语语法体系</h1>
+  <div class="sub">三层建造框架（vP·dP·cP）· 刘文照·海老原博《日本语初级语法》</div>
+  <div class="tags">
+    <span class="tag tag-t2">vP 谓语核心层</span>
+    <span class="tag tag-t3">dP 限定修饰层</span>
+    <span class="tag tag-t5">cP 句子构建层</span>
+    <span class="tag tag-t1">N5→N3</span>
+  </div>
+</div>
+
+<!-- ======== Framework Overview (dP·vP·cP) ======== -->
+<section class="sec" id="sec0" data-searchable>
+  <h2><span class="ico" style="background:var(--accent)">框</span> 三层语法框架</h2>
+  <p class="desc">日语句子是从里到外<strong>三层建造</strong>的。理解这三步，任何复杂的语法都有位置可以放入。</p>
+
+  <!-- 三层可视化 -->
+  <div class="fw-diagram">
+    <div class="fw-layer fw-cp">
+      <div class="fw-layer-label">cP 句子构建层</div>
+      <div class="fw-layer-desc">「怎么说」—— 语气·主题·复句·敬语</div>
+      <div class="fw-layer fw-vp">
+        <div class="fw-layer-label">vP 谓语核心层</div>
+        <div class="fw-layer-desc">「干什么」—— 动词变形·时态·体态·语态</div>
+        <div class="fw-layer fw-core">
+          <div class="fw-layer-label">核心谓词</div>
+          <div class="fw-layer-desc">食べる · 書く · 高い · 静かだ</div>
+        </div>
+      </div>
+      <div class="fw-layer fw-dp">
+        <div class="fw-layer-label">dP 限定修饰层</div>
+        <div class="fw-layer-desc">「修饰谁」—— 格助词·连体修饰·限定</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 三层对照表 -->
+  <div class="tbl-wrap" style="margin-top:20px;">
+  <table class="tbl">
+    <thead><tr><th style="width:8%">层级</th><th style="width:15%">名称</th><th style="width:20%">想问的问题</th><th style="width:32%">管辖的语法内容</th><th>打个比方</th></tr></thead>
+    <tbody>
+      <tr style="border-left:4px solid var(--accent2)">
+        <td><strong>vP</strong></td>
+        <td><strong>谓语核心层</strong></td>
+        <td>句子在干什么？</td>
+        <td>动词分类·六大活用·时态（タ/ル）·体（ている/てある）·态（受身/使役/可能）·形容词活用</td>
+        <td><span style="font-size:.85em">发动机</span></td>
+      </tr>
+      <tr style="border-left:4px solid var(--accent3)">
+        <td><strong>dP</strong></td>
+        <td><strong>限定修饰层</strong></td>
+        <td>谁、什么、用什么？</td>
+        <td>体言（名·代·数）·格助词（が/を/に/で等）·连体修饰（の/な/い形）·提示/限定助词·形式名词</td>
+        <td><span style="font-size:.85em">方向盘+轮子</span></td>
+      </tr>
+      <tr style="border-left:4px solid var(--accent5)">
+        <td><strong>cP</strong></td>
+        <td><strong>句子构建层</strong></td>
+        <td>怎么表达、和什么挂钩？</td>
+        <td>主题标记（はvsが）·句型（陈述/疑问/命令）·复句（から/ので/ば/たら）·推测判断·终助词·敬语</td>
+        <td><span style="font-size:.85em">车身外壳</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="rule">
+    <strong>建造日语句子的三步法：</strong><br>
+    <span style="font-size:.95em">① <span style="color:var(--accent2);font-weight:700">vP</span> 先确定谓语核心 — 干什么（<span class="jp">食べる</span>）<br>
+    ② <span style="color:var(--accent3);font-weight:700">dP</span> 再填充名词短语 — 谁吃、吃什么、在哪里吃（<span class="jp">私が·パンを·家で</span>）<br>
+    ③ <span style="color:var(--accent5);font-weight:700">cP</span> 最后套上句子外壳 — 陈述/疑问/礼貌程度（<span class="jp">食べた·食べた？·召し上がりました</span>）</span>
+  </div>
+
+  <div class="card" style="margin-top:16px; background:var(--bg3); border-left: 3px solid var(--accent); padding:14px 18px;">
+    <strong style="color:var(--accent)">从此以后——</strong> 你学到的<strong>任何</strong>日语语法点，都可以归入 vP / dP / cP 三个抽屉之一。<br>
+    <span style="font-size:.9em;color:var(--text3)">比如「使役态（させる）」→ vP；「格助词 に vs で」→ dP；「敬语」→ cP。框架永远不会破。</span>
+  </div>
+</section>
+
+<!-- 快速导航卡片 -->
+<div class="nav-cards">
+  <a class="nav-card" href="#sec1">
+    <div class="nc-bar" style="background:var(--accent2)"></div>
+    <div class="nc-icon">❤️</div>
+    <div class="nc-title">vP 谓语核心层</div>
+    <div class="nc-sub">用言·活用·时态·体态·语态</div>
+  </a>
+  <a class="nav-card" href="#sec3">
+    <div class="nc-bar" style="background:var(--accent3)"></div>
+    <div class="nc-icon">🏷️</div>
+    <div class="nc-title">dP 限定修饰层</div>
+    <div class="nc-sub">体言·格助词·连体修饰·形式名词</div>
+  </a>
+  <a class="nav-card" href="#sec5">
+    <div class="nc-bar" style="background:var(--accent5)"></div>
+    <div class="nc-icon">🏛️</div>
+    <div class="nc-title">cP 句子构建层</div>
+    <div class="nc-sub">主题·句型·复句·推测·敬语</div>
+  </a>
+</div>
+
+<!-- 推荐学习路径 -->
+<div class="learning-path" id="learningPath">
+  <span class="lp-label">📖 推荐建造顺序：</span>
+  <span class="lp-step" data-target="sec1">① vP 谓语核心</span>
+  <span class="lp-arrow">→</span>
+  <span class="lp-step" data-target="sec3">② dP 限定修饰</span>
+  <span class="lp-arrow">→</span>
+  <span class="lp-step" data-target="sec5">③ cP 句子构建</span>
+</div>
+
+<!-- 使用指南 -->
+<div class="usage-guide" id="usageGuide">
+  <div class="usage-guide-icon">💡</div>
+  <div class="usage-guide-content">
+    <strong>页面中有「📖 详解」按钮</strong> — 点击可展开隐藏的进阶知识点和辨析内容。
+    <span class="demo-toggle" id="demoToggle"><span class="ar">▶</span> 点我试试</span>
+    <div class="usage-guide-demo" id="usageGuideDemo">
+      👆 就像这样！需要时展开、看完收起，保持页面简洁。滚动到任意章节试试那些 📖 详解按钮吧。
+    </div>
+  </div>
+  <button class="usage-guide-close" id="usageGuideClose" title="不再显示">✕</button>
+</div>
+
+<!-- ======== Part 1: 词类体系 ======== -->
+<section class="sec" id="sec1" data-searchable>
+  <h2><span class="ico" style="background:var(--accent)">1</span> 词类体系（品詞）<span class="h2-layer" style="background:var(--accent2);margin-left:10px">vP</span><span class="h2-layer" style="background:var(--accent3);margin-left:4px">dP</span></h2>
+  <p class="desc">日语12类词按<strong>能否独立使用</strong>分两大阵营。核心区别：「<strong>有活用</strong> vs <strong>无活用</strong>」。</p>
+
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>阵营</th><th>词类</th><th>活用</th><th>功能</th><th>例</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td rowspan="10"><strong>独立词<br>（自立語）</strong></td><td>动词</td><td>✅ 有</td><td>动作·状态·存在</td><td>書く·食べる·する·来る</td></tr>
+      <tr class="hl"><td>イ形容词</td><td>✅ 有</td><td>性质·状态（词尾い）</td><td>高い·美しい·楽しい</td></tr>
+      <tr class="hl"><td>ナ形容词</td><td>✅ 有</td><td>性质·状态（词尾だ）</td><td>静かだ·元気だ·有名だ</td></tr>
+      <tr><td>名词</td><td>❌ 无</td><td>事物名称</td><td>本·学校·先生</td></tr>
+      <tr><td>数词</td><td>❌ 无</td><td>数量·顺序</td><td>一つ·三·百</td></tr>
+      <tr><td>代词</td><td>❌ 无</td><td>指代</td><td>これ·わたし·誰</td></tr>
+      <tr><td>副词</td><td>❌ 无</td><td>修饰用言</td><td>とても·ゆっくり</td></tr>
+      <tr><td>连体词</td><td>❌ 无</td><td>修饰体言（名词）</td><td>この·大きな</td></tr>
+      <tr><td>接续词</td><td>❌ 无</td><td>连接句节</td><td>しかし·そして</td></tr>
+      <tr><td>感叹词</td><td>❌ 无</td><td>感叹·应答</td><td>ああ·はい·もしもし</td></tr>
+      <tr class="hl"><td rowspan="2"><strong>附属词<br>（付属語）</strong></td><td>助词</td><td>❌ 无</td><td>表示语法关系</td><td>が·を·に·は·から</td></tr>
+      <tr class="hl"><td>助动词</td><td>✅ 有</td><td>增添语法意义</td><td>だ·た·ない·たい·れる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-wc-table"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-wc-table">
+    <h4>词类判断的实战方法</h4>
+    <p>看一个日语单词属于什么词类，可以通过以下<strong>三步测试法</strong>快速判断：</p>
+    <ul>
+      <li><strong>第1步：看词尾</strong> — 以<span class="jp-inline">い</span>结尾的未必是イ形容词（<span class="jp-inline">きれい·嫌い</span>是ナ形）；以<span class="jp-inline">だ</span>为基本形的未必是名词（<span class="jp-inline">静かだ</span>是ナ形）。关键看<span class="jp-inline">い</span>是否在词干内。</li>
+      <li><strong>第2步：看接续</strong> — 修饰名词时：用<span class="jp-inline">〜い＋名詞</span>的是イ形；用<span class="jp-inline">〜な＋名詞</span>的是ナ形；用<span class="jp-inline">〜の＋名詞</span>的是名词。</li>
+      <li><strong>第3步：看否定</strong> — 否定形为<span class="jp-inline">〜くない</span>的是イ形；为<span class="jp-inline">〜ではない</span>的是ナ形或名词。</li>
+    </ul>
+
+    <h4>ナ形容词的特殊身份</h4>
+    <p>ナ形容词在日语学校语法中被称为「形容動詞」，因为它在<strong>意义上像形容词</strong>（描述性质），但在<strong>语法上像动词</strong>（有活用：<span class="jp-inline">だ·な·に·で·なら</span>）。这个特殊身份导致它和名词常常混淆——比如「<span class="jp-inline">健康だ</span>」既可作为ナ形（彼は健康だ），也可作为名词（健康が一番だ），取决于语境。</p>
+
+    <div class="warn">
+      <strong>⚠ 初学者常见错误：</strong>把「<span class="jp-inline">きれい</span>」当成イ形容词写成「<span class="jp-inline">きれくない</span>」（正：<span class="jp-inline">きれいではない</span>）。记忆方法：<span class="jp-inline">きれい</span>的汉字是「綺麗」，词干是<span class="jp-inline">きれい</span>（包含い），不是词尾い。
+    </div>
+
+    <h4>附属词的价值</h4>
+    <p>助词和助动词虽然不能独立使用，但它们是日语语法的<strong>骨架</strong>。一个日语句子的语义关系主要由助词标记（谁做、对谁做、在哪儿做），语法意义由助动词标记（否定·时态·态度）。可以说，独立词提供内容，附属词提供结构。</p>
+  </div>
+
+  <div class="grid2" id="sec1-taigen">
+    <div class="rule">
+      <strong>体言</strong> = 名词·数词·代词<br>
+      功能：作主语、宾语等。本身不活用，靠后续「だ」等助动词变。
+    </div>
+    <div class="rule">
+      <strong>用言</strong> = 动词·イ形·ナ形<br>
+      功能：作谓语。本身有活用（词尾变化），是句子的核心。
+    </div>
+  </div>
+  <p style="font-size:.85em; color:var(--text2); margin-top:10px;">
+    <strong>为什么词类这么重要？</strong>因为日语中<strong>词类决定接续规则</strong>。同一个"很"——修饰名词用「<span class="jp">大きな本</span>」（连体修饰），修饰动词用「<span class="jp">ゆっくり歩く</span>」（连用修饰）。不知道词类，就无法正确造句。
+  </p>
+
+  <button class="detail-toggle" data-target="detail-wc-core"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-wc-core">
+    <h4>体言 vs 用言——日语句子的两大支柱</h4>
+    <p>这个区分是理解日语句法的基础。简单来说：</p>
+    <ul>
+      <li><strong>体言 = "不变的名词性成分"</strong>：自身不活用，需要借助助词标记格关系、借助助动词「<span class="jp-inline">だ·です</span>」才能充当谓语。</li>
+      <li><strong>用言 = "会变的谓语性成分"</strong>：自身有活用体系，可直接结尾构成句子，无需借助其他词。</li>
+    </ul>
+    <div class="tip">
+      <strong>💡 实用技巧：</strong>判断一个词是否为用言，看它能否<strong>直接以终止形结尾</strong>构成完整句子。<br>
+      例：<span class="jp-inline">行く。</span>（✅ 动词，可直接结句） vs <span class="jp-inline">学校。</span>（❌ 名词，需要「だ/です」）<br>
+      这个测试适用于所有情况。
+    </div>
+
+    <h4 id="sec1-indep">修饰词类的联结功能</h4>
+    <p>副词和连体词虽然不能作主语或谓语，但它们是句子中的<strong>联结剂</strong>：</p>
+    <ul>
+      <li><strong>副词 → 修饰用言</strong>：<span class="jp-inline">とても楽しい</span>（副词「とても」修饰イ形容词「楽しい」）</li>
+      <li><strong>连体词 → 修饰体言</strong>：<span class="jp-inline">この本</span>（连体词「この」修饰名词「本」）</li>
+      <li><strong>注意：</strong>日语中修饰名词和修饰动词用的是两类不同的词，不能互换。这是英语「very / this」无法类比的地方。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ======== Part 2: 活用体系 ======== -->
+<section class="sec" id="sec2" data-searchable>
+  <h2><span class="ico" style="background:var(--accent2)">2</span> 活用体系（活用）<span class="h2-layer" style="background:var(--accent2);margin-left:10px">vP 谓语核心层</span></h2>
+  <p class="desc">活用是日语最独特的语法机制——<strong>词尾根据后续成分变化</strong>。英语中只有时态和人称的轻微变形，而日语中名词、动词、形容词都有系统的变形表。</p>
+
+  <!-- 动词 -->
+  <h3 id="sec2-verb" style="color:var(--accent2);">▎ 动词活用（四种类型）</h3>
+  <p class="desc">日语动词按<strong>辞书形词尾</strong>分为四类，分类是变形的基础。判断方法：</p>
+  <div class="grid2">
+    <div class="rule">
+      <strong>Ⅰ类（五段）：</strong>词尾在<span class="jp">う段</span>，且非<span class="jp">る</span>结尾（或<span class="jp">る</span>前假名在<span class="jp">あ·う·お段</span>）。<br>
+      例：<span class="jp">書く·読む·話す·待つ·死ぬ·飛ぶ·歩く·分かる</span><br>
+      <span style="font-size:.82em;color:var(--text3)">⚠ 例外（伪装成Ⅱ类的Ⅰ类）：<span class="jp" style="font-size:1em">帰る·切る·知る·入る·走る·要る·限る·滑る·減る·練る</span>——<span class="jp" style="font-size:1em">る</span>前虽在<span class="jp" style="font-size:1em">い·え段</span>，仍按Ⅰ类变形（<span class="jp" style="font-size:1em">帰らない</span>，非「帰ない」）</span>
+    </div>
+    <div class="rule">
+      <strong>Ⅱ类（一段）：</strong>词尾<span class="jp">る</span>，且<span class="jp">る</span>前假名在<span class="jp">い·え段</span>。<br>
+      例：<span class="jp">食べる·見る·起きる·寝る·教える·出る</span><br>
+      <span style="font-size:.82em;color:var(--text3)">⚠ 例外：帰る·切る·知る·入る 属Ⅰ类</span>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="rule">
+      <strong>Ⅲ类（サ変）：</strong><span class="jp">する</span>及<span class="jp">～する</span>复合动词。<br>
+      例：<span class="jp">勉強する·散歩する·コピーする</span>
+    </div>
+    <div class="rule">
+      <strong>Ⅳ类（カ変）：</strong>仅 <span class="jp">来る（くる）</span> 一个词。
+    </div>
+  </div>
+
+  <!-- 50音图 × 动词变形 -->
+  <div class="gojuon-wrap" id="gojuonBox">
+    <div class="gojuon-title">
+      <span class="dot" style="background:var(--accent2)"></span>
+      五十音图 × 动词变形对照
+    </div>
+    <div class="gojuon-toggles" id="gojuonToggles">
+      <button class="gojuon-toggle active" data-vtype="godan">Ⅰ类·五段（書く）</button>
+      <button class="gojuon-toggle" data-vtype="ichidan">Ⅱ类·一段（食べる）</button>
+      <button class="gojuon-toggle" data-vtype="sahen">Ⅲ类·サ変（する）</button>
+      <button class="gojuon-toggle" data-vtype="kahen">Ⅳ类·カ変（来る）</button>
+      <button class="gojuon-autoplay" id="gojuonAutoplay" title="自动循环演示：逐格弹出变形位置，直达体现词尾移动过程">▶ 自动演示</button>
+    </div>
+
+    <div class="gojuon-grid">
+      <div class="gh"></div>
+      <div class="gh">あ段</div><div class="gh">い段</div><div class="gh">う段</div><div class="gh">え段</div><div class="gh">お段</div>
+    </div>
+    <div class="gojuon-grid" id="gojuonGrid"></div>
+
+    <div class="gojuon-legend" id="gojuonLegend"></div>
+    <div class="gojuon-tip">💡 点击 <b>▶ 自动演示</b> 观看动词变形在五十音图上的逐格推进——五段左→右教科书式遍历，カ変跳跃乱序（お→い→う→え→お），对比之下不规则的图案清晰可见。</div>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-vtype"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-vtype">
+    <h4>动词分类的实战技巧</h4>
+    <p>看到一个动词，先别看意思，<strong>先判断它的类别</strong>——因为类别决定了所有变形的走向。以下是提速判断的方法：</p>
+
+    <h4>Ⅰ类 vs Ⅱ类的决胜规则</h4>
+    <p>只关心一种情况：词尾是<span class="jp-inline">る</span>且<span class="jp-inline">る</span>前假名在<span class="jp-inline">い·え段</span>时，才可能是Ⅱ类。其他所有情况都是Ⅰ类。</p>
+    <ul>
+      <li><span class="jp-inline">書く·読む·話す·死ぬ</span> → 词尾非る → <strong>必Ⅰ类</strong></li>
+      <li><span class="jp-inline">分かる·作る·送る</span> → る前在あ·う·お段 → <strong>必Ⅰ类</strong></li>
+      <li><span class="jp-inline">食べる·起きる·寝る</span> → る前在い·え段 → <strong>很可能Ⅱ类</strong>，再看例外</li>
+    </ul>
+
+    <div class="warn">
+      <strong>⚠ Ⅰ类伪装者（看起来像Ⅱ类，实际是Ⅰ类）：</strong><br>
+      <span class="jp-inline">帰る（かえる）·切る（きる）·知る（しる）·入る（はいる）·走る（はしる）·減る（へる）·要る（いる）·限る（かぎる）·滑る（すべる）·練る（ねる）</span><br>
+      这些词的<span class="jp-inline">ない形</span>不是去掉<span class="jp-inline">る</span>加<span class="jp-inline">ない</span>，而是按Ⅰ类规则变：<span class="jp-inline">帰らない·切らない</span>（不是「帰ない·切ない」）。
+    </div>
+
+    <h4>Ⅲ类（サ変）的扩展</h4>
+    <p>除了<span class="jp-inline">する</span>本身，任何<span class="jp-inline">动作性名词＋する</span>都是Ⅲ类。这是日语中最高产的动词生成方式：<span class="jp-inline">勉強する·連絡する·理解する·チェックする·アップする</span>。掌握这个规律，就能自己"造"出日语动词。</p>
+
+    <h4>变形学习的正确顺序</h4>
+    <p>不要按字母顺序背变形表。按<strong>使用频率</strong>来：</p>
+    <ol style="font-size:.85em;color:var(--text2);margin:4px 0 10px 18px;">
+      <li><strong>ます形</strong>（最基础礼貌体，入门必学）</li>
+      <li><strong>て形·た形</strong>（连接一切的关键，最常用变形）</li>
+      <li><strong>ない形</strong>（否定，使用频率极高）</li>
+      <li><strong>辞书形</strong>（原形，查词典的依据）</li>
+      <li><strong>ば形·意志形·命令形</strong>（进阶用法）</li>
+    </ol>
+  </div>
+
+  <h3 style="color:var(--accent2); font-size:.95em; margin:20px 0 8px;">▎ 自动词 vs 他动词</h3>
+  <p class="desc">日语大量使用自他动词对来表达"自然发生"vs"人为动作"，这是汉语/英语中没有的概念。掌握自他区分是正确使用助词<span class="jp">が·を</span>的前提。</p>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th style="width:18%">自动词（vi）</th><th style="width:18%">他动词（vt）</th><th>自·他 例句对比</th></tr></thead>
+    <tbody>
+      <tr><td>開く（あく）</td><td>開ける（あける）</td><td>ドア<span style="color:var(--c3)">が</span>開く。 / 私<span style="color:var(--c3)">が</span>ドア<span style="color:var(--c3)">を</span>開ける。</td></tr>
+      <tr><td>閉まる（しまる）</td><td>閉める（しめる）</td><td>窓<span style="color:var(--c3)">が</span>閉まった。 / 窓<span style="color:var(--c3)">を</span>閉めた。</td></tr>
+      <tr><td>始まる（はじまる）</td><td>始める（はじめる）</td><td>授業<span style="color:var(--c3)">が</span>始まる。 / 先生<span style="color:var(--c3)">が</span>授業<span style="color:var(--c3)">を</span>始める。</td></tr>
+      <tr><td>出る（でる）</td><td>出す（だす）</td><td>猫<span style="color:var(--c3)">が</span>出た。 / 猫<span style="color:var(--c3)">を</span>出した。</td></tr>
+      <tr><td>落ちる（おちる）</td><td>落とす（おとす）</td><td>りんご<span style="color:var(--c3)">が</span>落ちた。 / りんご<span style="color:var(--c3)">を</span>落とした。</td></tr>
+      <tr><td>続く（つづく）</td><td>続ける（つづける）</td><td>雨<span style="color:var(--c3)">が</span>続く。 / 勉強<span style="color:var(--c3)">を</span>続ける。</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="rule">
+    <strong>核心规律：</strong>自他动词通常成对出现，词尾有对应关系——<br>
+    <span class="jp">-aru → -eru（上がる⇄上げる） / -reru → -su（壊れる⇄壊す） / -u → -eru（開く⇄開ける）</span>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-jita"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-jita">
+    <h4>自他动词：日语的"视角"语法</h4>
+    <p>自他动词的区别本质上是<strong>说话人的关注焦点</strong>不同：</p>
+    <ul>
+      <li><strong>自动词句 = 事件视角</strong>：只描述"发生了什么"，不关心谁做的。<br>
+        → <span class="jp-inline">ドアが開いた。</span>（门开了。——谁开的？不重要/不知道/不存在）</li>
+      <li><strong>他动词句 = 施事视角</strong>：明确"谁做了什么事"，有意志的动作主体。<br>
+        → <span class="jp-inline">（私が）ドアを開けた。</span>（我开了门。——动作主体明确）</li>
+    </ul>
+    <div class="tip">
+      <strong>💡 记忆技巧：</strong>自他对应不靠死记硬背，靠<strong>词尾对应规律</strong>：<br>
+      <span class="jp-inline">-aru（自）↔ -eru（他）</span>：上がる↔上げる · 集まる↔集める · 始まる↔始める<br>
+      <span class="jp-inline">-reru（自）↔ -su（他）</span>：壊れる↔壊す · 流れる↔流す · 離れる↔離す<br>
+      <span class="jp-inline">-u（自）↔ -eru（他）</span>：開く↔開ける · 続く↔続ける · 届く↔届ける<br>
+      掌握这三组对应，就能推断出大部分自他动词对。
+    </div>
+    <div class="warn">
+      <strong>⚠ 常见偏误：</strong>汉语母语者最常犯的错误是<strong>滥用他动词</strong>。汉语中"关门"必须有人关，但日语中既可以说「<span class="jp-inline">ドアを閉めた</span>」（他动，强调我关的），也可以说「<span class="jp-inline">ドアが閉まった</span>」（自动，门关了）。在不需要指明施事时，日语倾向于用自动词——这更符合日语的自然表达习惯。
+    </div>
+  </div>
+
+  <h3 style="color:var(--accent2); font-size:.95em; margin:20px 0 8px;">▎ 活用形总表</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>活用形</th><th>Ⅰ类（書く）</th><th>Ⅱ类（食べる）</th><th>Ⅲ类（する）</th><th>Ⅳ类（来る）</th><th style="width:28%">用法</th></tr></thead>
+    <tbody>
+      <tr><td><strong>辞书形</strong></td><td>かく</td><td>たべる</td><td>する</td><td>くる</td><td class="cn">终止句 · 连体修饰</td></tr>
+      <tr><td><strong>ます形</strong></td><td>かきます</td><td>たべます</td><td>します</td><td>きます</td><td class="cn">礼貌体 · 复合词</td></tr>
+      <tr><td><strong>ない形</strong></td><td>かかない</td><td>たべない</td><td>しない</td><td>こない</td><td class="cn">否定</td></tr>
+      <tr><td><strong>て形</strong></td><td>かいて</td><td>たべて</td><td>して</td><td>きて</td><td class="cn">中顿 · 补助动词</td></tr>
+      <tr><td><strong>た形</strong></td><td>かいた</td><td>たべた</td><td>した</td><td>きた</td><td class="cn">过去·完了</td></tr>
+      <tr><td><strong>ば形</strong></td><td>かけば</td><td>たべれば</td><td>すれば</td><td>くれば</td><td class="cn">假定条件</td></tr>
+      <tr><td><strong>意志形</strong></td><td>かこう</td><td>たべよう</td><td>しよう</td><td>こよう</td><td class="cn">意志·劝诱</td></tr>
+      <tr><td><strong>命令形</strong></td><td>かけ</td><td>たべろ</td><td>しろ/せよ</td><td>こい</td><td class="cn">命令（粗）</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="rule">
+    <strong>Ⅰ类动词て形口诀：</strong>
+    <span class="jp">く→いて / ぐ→いで / す→して / う·つ·る→って / む·ぶ·ぬ→んで</span>
+    <br>例外：<span class="jp">行く→行って</span>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-conj"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-conj">
+    <h4>活用形的本质理解</h4>
+    <p>日语活用的本质是：<strong>动词词尾改变形态，以适配后续成分的要求</strong>。这不是"背公式"，而是"对接口"。</p>
+    <ul>
+      <li><strong>ます形</strong> = 礼貌接口 → <span class="jp-inline">〜ます·〜ましょう·〜たい</span></li>
+      <li><strong>ない形</strong> = 否定接口 → <span class="jp-inline">〜ない·〜なければならない</span></li>
+      <li><strong>て形</strong> = 万能连接接口 → <span class="jp-inline">〜て·〜ている·〜てから·〜ても</span></li>
+      <li><strong>た形</strong> = 完了态接口 → <span class="jp-inline">〜た·〜たり·〜たら</span></li>
+      <li><strong>ば形</strong> = 条件接口 → <span class="jp-inline">〜ば·〜ばいい</span></li>
+      <li><strong>意志形</strong> = 意图接口 → <span class="jp-inline">〜う·〜よう·〜と思う</span></li>
+    </ul>
+    <div class="tip">
+      <strong>💡 不要把变形当数学公式背。</strong>正确的方法是把每个活用形放到<strong>真实的句子中</strong>去感受。比如学て形时，不要背"く→いて"，而是不断造句：<br>
+      <span class="jp-inline">書いてください·歩いている·聞いてから·書いてもいい</span>——用多了自然就内化了。
+    </div>
+    <h4>关于命令形</h4>
+    <p>命令形在日常会话中极少使用（太粗鲁），但在以下场景常见：标语（<span class="jp-inline">止まれ</span>）、口号（<span class="jp-inline">頑張れ</span>）、男性间的亲密对话。日常表达命令/请求时，用<span class="jp-inline">てください·ないでください·なさい</span>更得体。</p>
+  </div>
+
+  <!-- 形容词 -->
+  <h3 id="sec2-iadj" style="color:var(--accent2);">▎ イ形容词活用</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>活用形</th><th>形态（高い）</th><th style="width:40%">用法</th></tr></thead>
+    <tbody>
+      <tr><td><strong>辞书形</strong></td><td>高い</td><td class="cn">终止·连体</td></tr>
+      <tr><td><strong>ない形</strong></td><td>高くない</td><td class="cn">否定</td></tr>
+      <tr><td><strong>て形</strong></td><td>高くて</td><td class="cn">中顿并列</td></tr>
+      <tr><td><strong>た形</strong></td><td>高かった</td><td class="cn">过去</td></tr>
+      <tr><td><strong>ば形</strong></td><td>高ければ</td><td class="cn">假定</td></tr>
+      <tr><td><strong>推量形</strong></td><td>高いだろう</td><td class="cn">推量</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3 id="sec2-naadj" style="color:var(--accent2);">▎ ナ形容词活用</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>活用形</th><th>形态（静かだ）</th><th style="width:40%">用法</th></tr></thead>
+    <tbody>
+      <tr><td><strong>辞书形</strong></td><td>静かだ</td><td class="cn">终止</td></tr>
+      <tr><td><strong>ない形</strong></td><td>静かではない</td><td class="cn">否定</td></tr>
+      <tr><td><strong>な形</strong></td><td>静かな</td><td class="cn">连体（修饰名词）</td></tr>
+      <tr><td><strong>に形</strong></td><td>静かに</td><td class="cn">连用（修饰动词）</td></tr>
+      <tr><td><strong>て形</strong></td><td>静かで</td><td class="cn">中顿</td></tr>
+      <tr><td><strong>た形</strong></td><td>静かだった</td><td class="cn">过去</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-adj"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-adj">
+    <h4>イ形容词与ナ形容词的功能差异</h4>
+    <p>二者在语义上都描述性质，但语法行为截然不同。核心差异在于<strong>修饰名词时的接续方式</strong>：</p>
+    <ul>
+      <li><strong>イ形 + 名词</strong>：直接接，<span class="jp-inline">高い＋山 → 高い山</span></li>
+      <li><strong>ナ形 + 名词</strong>：通过な连接，<span class="jp-inline">静か＋な＋町 → 静かな町</span></li>
+    </ul>
+    <p>这个<span class="jp-inline">な</span>是ナ形容词独有的标记，是它与名词区分的关键（名词修饰名词用<span class="jp-inline">の</span>）。</p>
+
+    <h4>イ形容词的「かっ」变——过去形的奥秘</h4>
+    <p>イ形容词过去形<span class="jp-inline">高かった</span>的形成原理：<span class="jp-inline">高い</span>的词干是<span class="jp-inline">高</span>，词尾<span class="jp-inline">い</span>在连用形中变为<span class="jp-inline">く</span>，加上过去助动词<span class="jp-inline">た</span>后发生音便 → <span class="jp-inline">高く＋た → 高かった</span>。这个<span class="jp-inline">かっ</span>看起来陌生，但它和动词た形的音便是同一个原理。</p>
+
+    <div class="warn">
+      <strong>⚠ 学习者在形容词上的常见偏误：</strong><br>
+      ① 修饰名词时忘记加<span class="jp-inline">な</span>：<span class="jp-inline">✗ 静か町</span> → <span class="jp-inline">○ 静かな町</span><br>
+      ② イ形容词过去否定形错用：<span class="jp-inline">✗ 高くなかった</span>（正确，但常有人写成「高くないでした」）<br>
+      ③ 把「いい」的活用当成规则形：<span class="jp-inline">いい</span>的否定是<span class="jp-inline">よくない</span>、过去是<span class="jp-inline">よかった</span>——完全换词干，这是唯一的不规则イ形容词。
+    </div>
+  </div>
+
+  <div class="rule" id="sec2-noun">
+    <strong>名词·数词·代词</strong> 本身无活用，活用指后续「だ」的变化：<br>
+    <span class="jp">学生だ（辞书） → 学生ではない（否定）→ 学生だった（过去）→ 学生で（中顿）</span>
+  </div>
+
+  <!-- 活用体系总结 -->
+  <div class="card" id="sec2-sum">
+    <div class="card-title">🔑 活用体系核心规律</div>
+    <div class="tbl-wrap">
+    <table class="tbl" style="margin:0">
+      <thead><tr><th>词类</th><th>词尾特征</th><th>变形数</th><th>核心变形</th></tr></thead>
+      <tbody>
+        <tr><td>动词</td><td>う段假名结尾</td><td>8+</td><td>ない·ます·て·た·ば·意志·命令</td></tr>
+        <tr><td>イ形容词</td><td>い 结尾</td><td>6</td><td>かっ·く·けれ（过去·中顿·假定）</td></tr>
+        <tr><td>ナ形容词</td><td>だ 结尾</td><td>6</td><td>だ→で·に·な·だった</td></tr>
+        <tr><td>名词系</td><td>无词尾</td><td>6</td><td>だ→で·の·な·だった</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-conj-sum"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-conj-sum">
+    <h4>活用体系的统一视角</h4>
+    <p>虽然动词、イ形、ナ形、名词的变形表看起来各不相同，但它们底层的<strong>功能维度是统一的</strong>：</p>
+    <ul>
+      <li><strong>否定维度</strong>：动词<span class="jp-inline">ない形</span> ↔ イ形<span class="jp-inline">〜くない</span> ↔ ナ形<span class="jp-inline">〜ではない</span> ↔ 名词<span class="jp-inline">〜ではない</span></li>
+      <li><strong>过去维度</strong>：动词<span class="jp-inline">た形</span> ↔ イ形<span class="jp-inline">〜かった</span> ↔ ナ形<span class="jp-inline">〜だった</span> ↔ 名词<span class="jp-inline">〜だった</span></li>
+      <li><strong>连接维度</strong>：动词<span class="jp-inline">て形</span> ↔ イ形<span class="jp-inline">〜くて</span> ↔ ナ形<span class="jp-inline">〜で</span> ↔ 名词<span class="jp-inline">〜で</span></li>
+    </ul>
+    <p>所以学习活用时，不要孤立地看每个词的变形表，而要<strong>横向对比同一功能在不同词类中的实现方式</strong>。</p>
+    <div class="tip">
+      <strong>💡 为什么ナ形和名词的活用几乎一样？</strong>因为ナ形容词的历史来源就是"名词+にあり"的缩合。所以它的活用本质上借用了名词+だ的体系——这也是为什么它叫"形容動詞"：意义是形容词，语法是动词（だ的活用）。
+    </div>
+  </div>
+</section>
+
+<!-- ======== Part 3: 格与助词 ======== -->
+<section class="sec" id="sec3" data-searchable>
+  <h2><span class="ico" style="background:var(--accent3)">3</span> 格与助词体系<span class="h2-layer" style="background:var(--accent3);margin-left:10px">dP · cP 限定修饰层</span></h2>
+  <p class="desc">助词是日语的"语法胶水"。相当于英语的<strong>介词 + 连词 + 语气词</strong>之和。分六大类。</p>
+
+  <!-- 格助词 — 核心 (点击行展开) -->
+  <h3 id="sec3-case" style="color:var(--accent3);">▎ 第一层：格助词（Case Particles）— 句子的骨架</h3>
+  <div class="tbl-wrap">
+  <table class="tbl case-tbl">
+    <thead><tr><th style="width:11%">格</th><th style="width:9%">助词</th><th style="width:38%">功能（=英语等价）</th><th>例句</th></tr></thead>
+    <tbody>
+
+      <!-- が -->
+      <tr class="case-row" data-particle="ga">
+        <td>主格</td><td><strong>が</strong></td><td>主语 / 对象语</td><td>雨<span style="color:var(--c3)">が</span>降る。 / 日本語<span style="color:var(--c3)">が</span>できる。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-ga"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">が</span> — 主语·对象·排他</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 主语（中立描写）</div><div class="jpex">雨が降る。 / 花が咲いた。</div></div>
+          <div class="usage-item"><div class="ulabel">② 对象语（能力·希望）</div><div class="jpex">日本語ができる。 / 水が飲みたい。</div></div>
+          <div class="usage-item"><div class="ulabel">③ 排他·强调焦点</div><div class="jpex">私がやります！（"我来做"——不是别人）</div></div>
+          <div class="usage-item"><div class="ulabel">④ 从句内主语（必须用が）</div><div class="jpex">私が作った料理。 / 母がくれた指輪。</div></div>
+        </div>
+        <div class="case-warn"><strong>⚠ が vs は 速判：</strong>疑问词提问 → が回答；主题说明 → は。谁来了？→ 田中さん<strong>が</strong>。 / 田中さん呢？→ 田中さん<strong>は</strong>来了。</div>
+      </div></td></tr>
+
+      <!-- の -->
+      <tr class="case-row" data-particle="no">
+        <td>属格</td><td><strong>の</strong></td><td>所有·所属（= of / 's）</td><td>私<span style="color:var(--c3)">の</span>本。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-no"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">の</span> — 所有·所属·同位·名词化</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 所有·所属</div><div class="jpex">私の本。 / 学校の図書館。</div></div>
+          <div class="usage-item"><div class="ulabel">② 性质·内容</div><div class="jpex">日本語の先生。 / 数学の教科書。</div></div>
+          <div class="usage-item"><div class="ulabel">③ 同位（= という）</div><div class="jpex">友達の田中さん。 / 社長の山田氏。</div></div>
+          <div class="usage-item"><div class="ulabel">④ 准体助词（名词化）</div><div class="jpex">赤いのが欲しい。 / 行くのを忘れた。</div></div>
+        </div>
+        <div class="case-warn"><strong>⚠ の vs こと（名词化）：</strong>「の」偏感官·具体（見るの·聞くの）、「こと」偏抽象·概念（勉強すること·知ること）。两者常可互换但语感不同。</div>
+      </div></td></tr>
+
+      <!-- を -->
+      <tr class="case-row" data-particle="wo">
+        <td>対格</td><td><strong>を</strong></td><td>宾语·移动经过</td><td>本<span style="color:var(--c3)">を</span>読む。 / 空<span style="color:var(--c3)">を</span>飛ぶ。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-wo"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">を</span> — 宾语·路径·出发点</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 他动词宾语</div><div class="jpex">本を読む。 / ご飯を食べる。</div></div>
+          <div class="usage-item"><div class="ulabel">② 移动路径（经过）</div><div class="jpex">空を飛ぶ。 / 道を歩く。 / 角を曲がる。</div></div>
+          <div class="usage-item"><div class="ulabel">③ 离开的起点</div><div class="jpex">家を出る。 / 大学を卒業する。 / バスを降りる。</div></div>
+          <div class="usage-item"><div class="ulabel">④ 使役对象（自动词）</div><div class="jpex">子供を遊ばせる。 / 母を驚かせる。</div></div>
+        </div>
+        <div class="case-warn"><strong>⚠ 路径を ≠ 目的地に：</strong>「公園<strong>を</strong>散歩する」= 在公园里走（路径）；「公園<strong>に</strong>行く」= 去公园（目的地）。路径を的动词如：歩く·走る·飛ぶ·渡る·曲がる·通る。</div>
+      </div></td></tr>
+
+      <!-- に -->
+      <tr class="case-row" data-particle="ni">
+        <td>与格</td><td><strong>に</strong></td><td>时间·处所·对象·目的（= to/at/on/for）</td><td>学校<span style="color:var(--c3)">に</span>行く。 / 机<span style="color:var(--c3)">に</span>ある。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-ni"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">に</span> — 最"忙"的格助词——核心：指向/终点</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 时间点</div><div class="jpex">3時に起きる。 / 日曜日に会う。</div></div>
+          <div class="usage-item"><div class="ulabel">② 存在场所（静态）</div><div class="jpex">机の上に本がある。 / 東京に住む。</div></div>
+          <div class="usage-item"><div class="ulabel">③ 动作对象·方向</div><div class="jpex">友達に話す。 / 母に手紙を書く。</div></div>
+          <div class="usage-item"><div class="ulabel">④ 移动目的地</div><div class="jpex">学校に行く。 / 日本に着いた。</div></div>
+          <div class="usage-item"><div class="ulabel">⑤ 变化结果</div><div class="jpex">医者になる。 / 赤に変わる。</div></div>
+          <div class="usage-item"><div class="ulabel">⑥ 被动施事</div><div class="jpex">先生に褒められた。 / 雨に降られた。</div></div>
+          <div class="usage-item"><div class="ulabel">⑦ 动作目的（去/来做…）</div><div class="jpex">勉強に行く。 / 映画を見に行く。</div></div>
+          <div class="usage-item"><div class="ulabel">⑧ 频率基准</div><div class="jpex">週に一回。 / 一日に三回。</div></div>
+        </div>
+        <div class="case-warn"><strong>⚠ に vs で（场所）：</strong>に=钉子（静态存在），で=舞台（动态动作）。桌子"上"有书 → に。图书馆"里"学习 → で。</div>
+      </div></td></tr>
+
+      <!-- へ -->
+      <tr class="case-row" data-particle="e">
+        <td>方向格</td><td><strong>へ</strong></td><td>方向（= to/toward）</td><td>東京<span style="color:var(--c3)">へ</span>行く。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-e"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">へ</span> — 方向·抽象指向</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 移动方向（抽象/模糊）</div><div class="jpex">東京へ行く。 / 未来へ進む。</div></div>
+          <div class="usage-item"><div class="ulabel">② 动作的对象（书信等）</div><div class="jpex">田中さんへ。 / 母への手紙。</div></div>
+        </div>
+        <div class="case-warn"><strong>⚠ に vs へ：</strong>に强调"到达点"，へ强调"方向"。口语中用に更多；へ更书卷气，带有"朝向远方"的语感。两者在"去"类动词中常可互换。</div>
+      </div></td></tr>
+
+      <!-- で -->
+      <tr class="case-row" data-particle="de">
+        <td>具格</td><td><strong>で</strong></td><td>场所·手段·原因（= by/with/at）</td><td>バス<span style="color:var(--c3)">で</span>行く。 / 図書館<span style="color:var(--c3)">で</span>勉強。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-de"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">で</span> — 舞台·工具·原因——核心：限定舞台</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 动作场所（动态）</div><div class="jpex">図書館で勉強する。 / 東京で働く。</div></div>
+          <div class="usage-item"><div class="ulabel">② 手段·工具</div><div class="jpex">ペンで書く。 / バスで行く。</div></div>
+          <div class="usage-item"><div class="ulabel">③ 材料（可见原料）</div><div class="jpex">木で作る。 / 紙で折る。</div></div>
+          <div class="usage-item"><div class="ulabel">④ 原因·理由</div><div class="jpex">雨で中止。 / 病気で休む。</div></div>
+          <div class="usage-item"><div class="ulabel">⑤ 范围·期限·数量</div><div class="jpex">3日で完成。 / 全部で千円。</div></div>
+          <div class="usage-item"><div class="ulabel">⑥ 状态·样态</div><div class="jpex">一人で行く。 / 笑顔で話す。</div></div>
+        </div>
+        <div class="case-warn"><strong>⚠ で vs に（原因对比）：</strong>で = 客观外部原因（雨で·事故で）；に = 心理/生理反应（嬉しさに·驚きに）。「雨に濡れる」的には被动施事，非原因。</div>
+      </div></td></tr>
+
+      <!-- と -->
+      <tr class="case-row" data-particle="to">
+        <td>共格</td><td><strong>と</strong></td><td>共同·内容（= with / and）</td><td>友達<span style="color:var(--c3)">と</span>遊ぶ。 / ～<span style="color:var(--c3)">と</span>思う。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-to"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">と</span> — 共同·内容·并列</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 共同者·相互动作</div><div class="jpex">友達と遊ぶ。 / 彼と結婚する。</div></div>
+          <div class="usage-item"><div class="ulabel">② 引用·思考内容</div><div class="jpex">「はい」と言う。 / いいと思う。</div></div>
+          <div class="usage-item"><div class="ulabel">③ 变化结果（客观·必然）</div><div class="jpex">塵も積もれば山となる。 / 長い間の努力が実となる。</div></div>
+          <div class="usage-item"><div class="ulabel">④ 并列（全部列举）</div><div class="jpex">AとB。 / りんごとバナナを買う。</div></div>
+        </div>
+        <div class="case-warn"><strong>⚠ と vs に（变化结果）：</strong>「になる」= 自然/一般的变化；「となる」= 强调最终结果、有"歷经过程才变成"的语感。口语中になる占绝对多数。</div>
+      </div></td></tr>
+
+      <!-- から -->
+      <tr class="case-row" data-particle="kara">
+        <td>夺格</td><td><strong>から</strong></td><td>起点（= from）</td><td>家<span style="color:var(--c3)">から</span>歩く。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-kara"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">から</span> — 起点·原料·被动施事</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 时间起点</div><div class="jpex">9時から始まる。 / 子供の頃から。</div></div>
+          <div class="usage-item"><div class="ulabel">② 空间起点</div><div class="jpex">家から歩く。 / 東京から大阪まで。</div></div>
+          <div class="usage-item"><div class="ulabel">③ 原料（化学变化·不可见）</div><div class="jpex">米から酒を作る。 / 石油からプラスチック。</div></div>
+          <div class="usage-item"><div class="ulabel">④ 被动施事（间接）</div><div class="jpex">先生から褒められた。 / 友達から誘われた。</div></div>
+          <div class="usage-item"><div class="ulabel">⑤ 原因·理由（接续助词）</div><div class="jpex">寒いからコートを着る。 / 時間がないから急ごう。</div></div>
+        </div>
+        <div class="case-warn"><strong>⚠ から vs で（材料）：</strong>から=原料（化学变化，看不见原形）：米→酒；で=材料（物理加工，看得见原形）：木→椅子。另一个角度：から强调"由…而来"，で强调"用…做成"。</div>
+      </div></td></tr>
+
+      <!-- まで -->
+      <tr class="case-row" data-particle="made">
+        <td>限界格</td><td><strong>まで</strong></td><td>终点（= to/until）</td><td>駅<span style="color:var(--c3)">まで</span>歩く。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-made"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">まで</span> — 终点·限度·极端</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 时间终点</div><div class="jpex">5時まで待つ。 / 明日までに提出。</div></div>
+          <div class="usage-item"><div class="ulabel">② 空间终点</div><div class="jpex">駅まで歩く。 / ここまで来た。</div></div>
+          <div class="usage-item"><div class="ulabel">③ 极端程度（甚至…都）</div><div class="jpex">子供まで知っている。 / 泣くまで怒った。</div></div>
+        </div>
+        <div class="case-warn"><strong>⚠ まで vs までに：</strong>「5時まで待つ」= 一直等到5点（持续）；「5時までに提出」= 在5点之前提交（截止时刻）。まで=持续终点，までに=截止时间点。</div>
+      </div></td></tr>
+
+      <!-- より -->
+      <tr class="case-row" data-particle="yori">
+        <td>比较格</td><td><strong>より</strong></td><td>比较基准（= than）</td><td>中国は日本<span style="color:var(--c3)">より</span>広い。</td>
+      </tr>
+      <tr class="case-detail" id="case-detail-yori"><td colspan="4"><div class="case-detail-inner">
+        <h5><span class="particle">より</span> — 比较·起点·限定</h5>
+        <div class="usages">
+          <div class="usage-item"><div class="ulabel">① 比较基准</div><div class="jpex">日本より広い。 / 思ったより簡単だ。</div></div>
+          <div class="usage-item"><div class="ulabel">② 时间/空间起点（书面）</div><div class="jpex">午後より会議。 / 駅より徒歩5分。</div></div>
+          <div class="usage-item"><div class="ulabel">③ 限定（〜よりほかない）</div><div class="jpex">歩くよりほかない。 / 待つより仕方がない。</div></div>
+        </div>
+        <div class="case-warn"><strong>💡 より做起点 = から的书面语：</strong>通知、告示、正式文件中「より」替代「から」很常见——「10時より開会」「駅前より出発」。口语中一般用から。</div>
+      </div></td></tr>
+
+    </tbody>
+  </table>
+  </div>
+  <div class="tip" style="margin-top:12px">💡 <strong>点击任一行格助词</strong>即可展开该助词的全部用法和辨析提示。</div>
+
+  <!-- 提示助词 -->
+  <h3 id="sec3-topic" style="color:var(--accent3);">▎ 第二层：提示助词（Topic/Focus）</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>助词</th><th>功能</th><th>例句</th></tr></thead>
+    <tbody>
+      <tr><td><strong>は</strong></td><td>主题（已知信息）</td><td>私<span style="color:var(--c3)">は</span>学生だ。</td></tr>
+      <tr><td><strong>も</strong></td><td>也 / 都</td><td>彼<span style="color:var(--c3)">も</span>来る。 / 誰<span style="color:var(--c3)">も</span>いない。</td></tr>
+      <tr><td><strong>でも</strong></td><td>即使 / 举例</td><td>日曜日<span style="color:var(--c3)">でも</span>働く。</td></tr>
+      <tr><td><strong>しか</strong></td><td>只（+否定）</td><td>百円<span style="color:var(--c3)">しか</span>ない。</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="rule">
+    <strong>「は」vs「が」核心区别：</strong><br>
+    <span class="jp">象<span style="color:var(--c3)">は</span>鼻<span style="color:var(--c3)">が</span>長い。</span>（大象的鼻子长）<br>
+    <strong>は</strong> = 大主题（"说到大象……"） / <strong>が</strong> = 小主语（描述鼻子"长"这个具体特征）
+  </div>
+
+  <h3 style="color:var(--accent3); font-size:.95em; margin:20px 0 8px;">▎ 高频混淆：「に」vs「で」（场所）</h3>
+  <div class="grid2">
+    <div class="rule">
+      <strong>に = 存在·附着（静态）</strong><br>
+      <span class="jp">机の上<span style="color:var(--c3)">に</span>本がある。</span>（桌上有一本书——存在）<br>
+      <span class="jp">東京<span style="color:var(--c3)">に</span>住んでいる。</span>（住在东京——静态状态）<br>
+      <span class="jp">壁<span style="color:var(--c3)">に</span>ポスターを貼る。</span>（把海报贴在墙上——附着点）
+    </div>
+    <div class="rule">
+      <strong>で = 动作进行（动态）</strong><br>
+      <span class="jp">図書館<span style="color:var(--c3)">で</span>勉強する。</span>（在图书馆学习——动作）<br>
+      <span class="jp">東京<span style="color:var(--c3)">で</span>働いている。</span>（在东京工作——动态活动）<br>
+      <span class="jp">駅<span style="color:var(--c3)">で</span>友達に会う。</span>（在车站见朋友——动作发生地）
+    </div>
+  </div>
+  <div class="rule">
+    <strong>记忆口诀：</strong>「<span class="jp">に</span>」是钉子（钉在哪儿），「<span class="jp">で</span>」是舞台（在哪儿上演动作）。<br>
+    <strong>特殊：</strong>「<span class="jp">～ている</span>」表状态时用<span class="jp">に</span>（住んでいる·置いてある），表动作持续时用<span class="jp">で</span>（遊んでいる·走っている）。
+  </div>
+
+  <h3 style="color:var(--accent3); font-size:.95em; margin:20px 0 8px;">▎ 「は」vs「が」进阶辨析</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th style="width:16%">场景</th><th style="width:18%">用「は」</th><th style="width:18%">用「が」</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>描写句</td><td>象<span style="color:var(--c3)">は</span>鼻が長い</td><td>鼻<span style="color:var(--c3)">が</span>長い</td><td class="cn">大主题は / 具体特征が</td></tr>
+      <tr><td>存在句</td><td>本<span style="color:var(--c3)">は</span>机の上だ</td><td>机の上に本<span style="color:var(--c3)">が</span>ある</td><td class="cn">主题说明は / 客观存在が</td></tr>
+      <tr><td>新信息</td><td>—</td><td>誰<span style="color:var(--c3)">が</span>来た？→田中さん<span style="color:var(--c3)">が</span>来た</td><td class="cn">疑问词+が / 新信息焦点</td></tr>
+      <tr><td>对比</td><td>コーヒー<span style="color:var(--c3)">は</span>飲むが、お酒<span style="color:var(--c3)">は</span>飲まない</td><td>—</td><td class="cn">对比用は（暗示其他不…）</td></tr>
+      <tr><td>从句主语</td><td>—</td><td>私<span style="color:var(--c3)">が</span>作った料理</td><td class="cn">从句内主语必须用が</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-waga"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-waga">
+    <h4>は vs が——日语语法中最难的一对</h4>
+    <p>这对助词的区别不是"意思不同"，而是<strong>信息结构不同</strong>。用语言学的术语来说：</p>
+    <ul>
+      <li><strong>は = Topic（主题）</strong>：标记"我们要谈论什么"——这是已知/共享信息</li>
+      <li><strong>が = Focus（焦点）</strong>：标记"这个信息是新的/重要的"——这是新信息</li>
+    </ul>
+
+    <h4>最实用的判断法：问题测试</h4>
+    <p>当你纠结用は还是が时，想象别人在问你什么问题：</p>
+    <ul>
+      <li>如果问题是<span class="jp-inline">「誰が〜？」</span>（谁做了？），回答用<span class="jp-inline">が</span>：<br>
+        <span class="jp-inline">誰が来た？→ 田中さん<strong>が</strong>来た。</span></li>
+      <li>如果问题是<span class="jp-inline">「〜は何/どう？」</span>（XX怎么样？），回答用<span class="jp-inline">は</span>：<br>
+        <span class="jp-inline">田中さんはどうした？→ 田中さん<strong>は</strong>来た。</span></li>
+    </ul>
+
+    <div class="warn">
+      <strong>⚠ 学习者常见误区：</strong><br>
+      不是"は=旧信息、が=新信息"这么简单。在从句中，<strong>主语必须用が</strong>，不论新旧信息——「<span class="jp-inline">私が作った料理は美味しい</span>」（我做的菜好吃）。这里的「私」是旧信息（说话人自己），但因为它在从句中，必须用が。
+    </div>
+
+    <h4>对比的「は」——容易被忽略的用法</h4>
+    <p><span class="jp-inline">コーヒーは飲むが、お酒は飲まない</span>——这里的「は」<strong>不是在标记普通主题</strong>，而是在做对比。"咖啡（我是喝的），但酒（我不喝）"。这个对比的は几乎可以替代任何格助词：<span class="jp-inline">を→は・に→は・で→は</span>。</p>
+  </div>
+  <h3 id="sec3-other" style="color:var(--accent3);">▎ 第三层：其他助词一览</h3>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">副助词（程度/数量/限定）</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0">
+        <thead><tr><th>词</th><th>义</th></tr></thead>
+        <tbody>
+          <tr><td>だけ</td><td>只</td></tr>
+          <tr><td>ばかり</td><td>尽是/刚</td></tr>
+          <tr><td>くらい</td><td>大约/程度</td></tr>
+          <tr><td>ほど</td><td>越…越/程度</td></tr>
+          <tr><td>か</td><td>不确定</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">并列助词</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0">
+        <thead><tr><th>词</th><th>义</th></tr></thead>
+        <tbody>
+          <tr><td>と</td><td>全部列举</td></tr>
+          <tr><td>や</td><td>部分列举</td></tr>
+          <tr><td>とか</td><td>举例</td></tr>
+          <tr><td>し</td><td>并列理由</td></tr>
+          <tr><td>たり</td><td>交替进行</td></tr>
+          <tr><td>か</td><td>或</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">接续助词（从句连接）</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0">
+        <thead><tr><th>词</th><th>义</th></tr></thead>
+        <tbody>
+          <tr><td>から</td><td>因为（主观）</td></tr>
+          <tr><td>ので</td><td>因为（客观）</td></tr>
+          <tr><td>と</td><td>一…就</td></tr>
+          <tr><td>ば</td><td>如果</td></tr>
+          <tr><td>たら</td><td>如果·当</td></tr>
+          <tr><td>ても</td><td>即使</td></tr>
+          <tr><td>のに</td><td>却（意外）</td></tr>
+          <tr><td>ながら</td><td>一边…一边</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">语气助词（句末）</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0">
+        <thead><tr><th>词</th><th>义</th></tr></thead>
+        <tbody>
+          <tr><td>か</td><td>疑问</td></tr>
+          <tr><td>ね</td><td>确认·感叹</td></tr>
+          <tr><td>よ</td><td>告知·提醒</td></tr>
+          <tr><td>よね</td><td>确认+告知</td></tr>
+          <tr><td>な(あ)</td><td>感叹</td></tr>
+          <tr><td>の</td><td>疑问/说明</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== Part 4: 时态·体·态 ======== -->
+<section class="sec" id="sec4" data-searchable>
+  <h2><span class="ico" style="background:var(--accent4)">4</span> 时态·体·态<span class="h2-layer" style="background:var(--accent2);margin-left:10px">vP 谓语层</span></h2>
+  <p class="desc">日语没有英语式的未来时，只有<strong>过去 vs 非过去</strong>的对立。而"体"（动作的阶段）和"态"（动作的参与方式）通过补助动词和助动词实现。</p>
+
+  <!-- 时态 -->
+  <h3 id="sec4-tense" style="color:var(--accent4);">▎ 时态（Tense）</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th></th><th>非过去（现在/未来）</th><th>过去</th></tr></thead>
+    <tbody>
+      <tr><td><strong>动词</strong></td><td>書く / 書きます</td><td>書いた / 書きました</td></tr>
+      <tr><td><strong>イ形容词</strong></td><td>高い / 高いです</td><td>高かった / 高かったです</td></tr>
+      <tr><td><strong>ナ形容词</strong></td><td>静かだ / 静かです</td><td>静かだった / 静かでした</td></tr>
+      <tr><td><strong>名词</strong></td><td>学生だ / 学生です</td><td>学生だった / 学生でした</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <!-- 体 -->
+  <h3 id="sec4-aspect" style="color:var(--accent4);">▎ 体（Aspect）— 动作的状态阶段</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>体</th><th>形式</th><th>意义</th><th>例句</th></tr></thead>
+    <tbody>
+      <tr><td>进行体</td><td><strong>V-ている</strong></td><td>正在做</td><td>本を読んでいる。</td></tr>
+      <tr><td>结果体</td><td><strong>V-ている</strong></td><td>动作结果持续</td><td>窓が割れている。</td></tr>
+      <tr><td>存续体</td><td><strong>V-てある</strong></td><td>人为准备的结果</td><td>窓が開けてある。</td></tr>
+      <tr><td>完了体</td><td><strong>V-てしまう</strong></td><td>做完/遗憾</td><td>全部食べてしまった。</td></tr>
+      <tr><td>准备体</td><td><strong>V-ておく</strong></td><td>预先做</td><td>準備しておく。</td></tr>
+      <tr><td>尝试体</td><td><strong>V-てみる</strong></td><td>试着做</td><td>食べてみる。</td></tr>
+      <tr><td>趋向体</td><td><strong>V-ていく/てくる</strong></td><td>去/来 + 持续/变化</td><td>歩いていく。寒くなってきた。</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="rule">
+    <strong>「ている」的多义性——同一个形式，四种含义：</strong><br>
+    <span class="jp">① 進行中：本を<strong>読んでいる</strong>。（正在读书）</span><br>
+    <span class="jp">② 結果状態：窓が<strong>割れている</strong>。（窗户破了——破的状态持续）</span><br>
+    <span class="jp">③ 習慣·反復：毎日<strong>走っている</strong>。（每天跑步——反复行为）</span><br>
+    <span class="jp">④ 経験·記録：三回日本に<strong>行っている</strong>。（去过三次日本——经历记录）</span><br>
+    <strong>区分关键：</strong>瞬间动词+ている=结果状态 / 持续动词+ている=进行中
+  </div>
+
+  <button class="detail-toggle" data-target="detail-aspect"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-aspect">
+    <h4>「ている」的四义——如何快速区分</h4>
+    <p>同一个<span class="jp-inline">〜ている</span>有四种含义，判断方法看动词的<strong>语义类型</strong>：</p>
+    <ul>
+      <li><strong>持续动词 + ている = 进行中</strong>：<span class="jp-inline">食べている·読んでいる·歩いている</span>（动作有持续时间）</li>
+      <li><strong>瞬间动词 + ている = 结果状态</strong>：<span class="jp-inline">死んでいる·割れている·結婚している</span>（动作瞬间完成，状态持续）</li>
+    </ul>
+    <p>这个区分对理解日语至关重要。英语的"he is dead"和"he is dying"完全不同，而日语「<span class="jp-inline">死んでいる</span>」只有一个形式，需要从动词类型判断。</p>
+
+    <h4>「てある」vs「ている」——人为 vs 自然</h4>
+    <p><span class="jp-inline">窓が開いている</span> = 窗开着（不关心是谁开的，自然状态）<br>
+    <span class="jp-inline">窓が開けてある</span> = 窗被打开了（有人为某个目的故意开的）<br>
+    这是日语特有的细腻区分——通过体标记区分"自然状态"和"人为准备"。</p>
+
+    <h4>「てしまう」的双重含义</h4>
+    <p><span class="jp-inline">食べてしまった</span>可以表示"吃完了"（中性），也可以表示"不小心吃掉了/可惜吃完了"（遗憾）。口语中常缩略为<span class="jp-inline">〜ちゃう</span>（食べちゃった）。</p>
+    <div class="tip">
+      <strong>💡 「ていく」vs「てくる」——空间+时间双重维度：</strong><br>
+      空间上：<span class="jp-inline">歩いていく</span>（走远去） vs <span class="jp-inline">歩いてくる</span>（走过来）<br>
+      时间上：<span class="jp-inline">〜ていく</span>（从现在到将来） vs <span class="jp-inline">〜てくる</span>（从过去到现在）<br>
+      例：<span class="jp-inline">これからも勉強していく。</span>（今后也会继续学） / <span class="jp-inline">寒くなってきた。</span>（冷起来了）
+    </div>
+  </div>
+
+  <!-- 态 -->
+  <h3 id="sec4-voice" style="color:var(--accent4);">▎ 态（Voice）— 动作的参与方式</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>态</th><th>形式</th><th>意义</th><th>例句</th></tr></thead>
+    <tbody>
+      <tr><td><strong>可能态</strong></td><td>V-れる/られる</td><td>能/会</td><td>日本語が話せる。</td></tr>
+      <tr><td><strong>被动态</strong></td><td>V-れる/られる</td><td>被/受到</td><td>先生にほめられた。</td></tr>
+      <tr><td><strong>使役态</strong></td><td>V-せる/させる</td><td>让/使</td><td>子供に勉強させる。</td></tr>
+      <tr><td><strong>使役被动态</strong></td><td>V-せられる/させられる</td><td>被迫</td><td>嫌いな物を食べさせられた。</td></tr>
+      <tr><td><strong>授受态</strong></td><td>V-て＋授受动词</td><td>给/得到恩惠</td><td>教えてくれた。/ 直してもらった。</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="rule">
+    <strong>授受态的核心——内外·上下关系：</strong><br>
+    <span class="jp">くれる（别人→我方） / あげる（我方→别人） / もらう（我方←别人）</span><br>
+    授受态同时在表达"谁为谁做"和"恩惠的流向"，是英语中没有的概念。
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">授受态三向场景对照</div>
+    <div class="tbl-wrap">
+    <table class="tbl" style="margin:0;">
+      <thead><tr><th>方向</th><th>形式</th><th>典型场景</th><th>例句</th></tr></thead>
+      <tbody>
+        <tr><td><strong>外→内</strong><br>别人→我方</td><td><strong>V-てくれる</strong></td><td>别人主动帮我</td><td>先生が<strong>教えてくれた</strong>。（老师教了我——感激）</td></tr>
+        <tr><td><strong>内→外</strong><br>我方→别人</td><td><strong>V-てあげる</strong></td><td>我帮别人</td><td>友達に本を<strong>貸してあげた</strong>。（借书给朋友<br>⚠ 对长辈用あげる可能失礼）</td></tr>
+        <tr><td><strong>外→内</strong><br>我方←别人</td><td><strong>V-てもらう</strong></td><td>我请/得到别人帮忙</td><td>先生に<strong>直してもらった</strong>。（请老师改了——受益）</td></tr>
+        <tr><td><strong>敬语变体</strong></td><td><strong>V-てくださる</strong><br><strong>V-ていただく</strong></td><td>对长辈/客户</td><td>社長が<strong>見てくださった</strong>。<br>先生に<strong>見ていただいた</strong>。</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="font-size:.82em; color:var(--text2); margin-top:8px;">
+      <strong>学习者常见错误：</strong>把「V-てあげる」直接用于长辈（如「先生に教えてあげた」），这在日语中是失礼的——因为あげる有"施恩于人"的居高临下感。对长辈应用「V-てさしあげる」或改用「V-ていただく」从对方视角表达。
+    </p>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-voice"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-voice">
+    <h4>可能态与被动态——形式相同，意义不同</h4>
+    <p>Ⅰ类动词的可能态和被动态形式相同（〜れる），需从上下文区分：</p>
+    <ul>
+      <li><span class="jp-inline">先生に<strong>ほめられた</strong></span> → 被老师表扬了（被动，に标记施事）</li>
+      <li><span class="jp-inline">日本語が<strong>話せる</strong></span> → 会说日语（可能，が标记对象）</li>
+    </ul>
+    <p>Ⅱ类动词的可能态（〜られる）和被动态（〜られる）形式也相同，但可以通过<strong>助词</strong>区分：被动句用<span class="jp-inline">に</span>标记施事，可能句用<span class="jp-inline">が</span>标记能力对象。</p>
+
+    <h4>日语被动句的两种类型</h4>
+    <p>英语的被动只表示"被做"，但日语有两种：</p>
+    <ul>
+      <li><strong>直接被动</strong>（中立）：<span class="jp-inline">先生にほめられた。</span>——客观描述</li>
+      <li><strong>迷惑被动</strong>（受害）：<span class="jp-inline">雨に降られた。</span>——"被雨下了"=遭遇了雨，带有困扰感。这是日语特有的表达方式。</li>
+    </ul>
+
+    <h4>授受态的社会文化维度</h4>
+    <p>日语授受表达不仅仅是"给/得到"的语法标记，还承载着<strong>社会关系判断</strong>：</p>
+    <ul>
+      <li><span class="jp-inline">くれる</span>：别人给我方恩惠 → 隐含感激</li>
+      <li><span class="jp-inline">あげる</span>：我方给别人恩惠 → 带"施恩"感，对长辈忌用</li>
+      <li><span class="jp-inline">もらう</span>：我方得到恩惠 → 最中性安全的选择</li>
+    </ul>
+    <div class="warn">
+      <strong>⚠ 安全选择：</strong>不确定该用哪个时，用<span class="jp-inline">V-ていただく</span>最安全——从"我得到"的视角表达，避免"我施恩于人"的潜在冒犯。
+    </div>
+  </div>
+
+  <!-- 助动词总表 -->
+  <h3 id="sec4-aux" style="color:var(--accent4);">▎ 助动词（判断·情态）一览</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>范畴</th><th>助动词</th><th>意义</th><th>接续</th></tr></thead>
+    <tbody>
+      <tr><td>断定</td><td>だ·です</td><td>是</td><td>N + だ</td></tr>
+      <tr><td>否定</td><td>ない·ず</td><td>不</td><td>V-ない形</td></tr>
+      <tr><td>过去</td><td>た</td><td>了</td><td>V-て形→た</td></tr>
+      <tr><td>愿望</td><td>たい·たがる</td><td>想</td><td>V-ます形 + たい</td></tr>
+      <tr><td>意志</td><td>（よ）う</td><td>吧/让我们</td><td>V-意志形</td></tr>
+      <tr><td>样态</td><td>そうだ（样态）</td><td>看起来</td><td>V-ます形 + そうだ</td></tr>
+      <tr><td>传闻</td><td>そうだ（传闻）</td><td>听说</td><td>V-终止形 + そうだ</td></tr>
+      <tr><td>比况</td><td>ようだ·みたいだ</td><td>好像</td><td>V-连体形 + ようだ</td></tr>
+      <tr><td>推量</td><td>らしい</td><td>似乎（有根据）</td><td>V-终止形 + らしい</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="rule">
+    <strong>辨析：ようだ vs らしい vs そうだ（传闻）</strong><br>
+    <span class="jp">熱がある<strong>ようだ</strong></span> — 主观感觉（摸额头觉得像发烧了）<br>
+    <span class="jp">熱がある<strong>らしい</strong></span> — 有根据推测（看他脸红、没精神 → 好像发烧了）<br>
+    <span class="jp">熱がある<strong>そうだ</strong></span> — 纯粹传闻（听别人说他发烧了）
+  </div>
+
+  <button class="detail-toggle" data-target="detail-modal"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-modal">
+    <h4>样态そうだ vs 传闻そうだ——最容易混淆的一对</h4>
+    <p>这两个<span class="jp-inline">そうだ</span>的区别不是"意思不同"，而是<strong>接续和来源不同</strong>：</p>
+    <ul>
+      <li><strong>样态そうだ</strong>：接<span class="jp-inline">V-ます形 / イ形词干 / ナ形词干</span>，表示"看起来～"。来源是说话人自己的<strong>直接观察</strong>。<br>
+        <span class="jp-inline">美味しそうだ</span>（看起来好吃——自己看到的判断）</li>
+      <li><strong>传闻そうだ</strong>：接<span class="jp-inline">V-终止形 / イ形终止形 / ナ形だ / Nだ</span>，表示"听说～"。来源是<strong>他人的信息</strong>。<br>
+        <span class="jp-inline">美味しいそうだ</span>（听说好吃——从别人那里听来的）</li>
+    </ul>
+
+    <h4>ようだ·みたいだ·らしい——推测三兄弟</h4>
+    <p>三者都表示"好像/似乎"，区别在于<strong>证据来源</strong>：</p>
+    <ul>
+      <li><span class="jp-inline"><strong>ようだ</strong></span>：基于<strong>自己的感官/直觉</strong>——"我摸他额头，觉得好像发烧了"<br>
+        → 书面语，正式</li>
+      <li><span class="jp-inline"><strong>みたいだ</strong></span>：与ようだ基本相同，但更<strong>口语化</strong>——日常会话首选</li>
+      <li><span class="jp-inline"><strong>らしい</strong></span>：基于<strong>客观迹象/传闻</strong>——"他脸红+没精神+听说不舒服，似乎发烧了"<br>
+        → 最客观，不掺杂说话人的主观判断</li>
+    </ul>
+    <div class="tip">
+      <strong>💡 简单记忆法：</strong><br>
+      <span class="jp-inline">ようだ</span> = 我的感觉<br>
+      <span class="jp-inline">らしい</span> = 客观迹象<br>
+      <span class="jp-inline">そうだ（传闻）</span> = 别人说的
+    </div>
+  </div>
+</section>
+
+<!-- ======== Part 5: 句型体系 ======== -->
+<section class="sec" id="sec5" data-searchable>
+  <h2><span class="ico" style="background:var(--accent5)">5</span> 句型体系（文型）<span class="h2-layer" style="background:var(--accent5);margin-left:10px">cP 句子构建层</span></h2>
+  <p class="desc">句型是将前面学到的活用、助词、助动词<strong>组合固定化</strong>的结果。按语义功能分类。</p>
+
+  <div class="grid2" id="sec5-patterns">
+    <!-- 命令 -->
+    <div class="card">
+      <div class="card-title">命令·请求（命令·依頼）</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0; font-size:.82em;">
+        <thead><tr><th>形式</th><th>强度</th></tr></thead>
+        <tbody>
+          <tr><td>V-命令形</td><td>👇👇👇 粗鲁</td></tr>
+          <tr><td>V-なさい</td><td>👇👇 温和命令</td></tr>
+          <tr><td>V-て</td><td>👇 日常请求</td></tr>
+          <tr><td>V-てください</td><td>👍 礼貌</td></tr>
+          <tr><td>おV-ください</td><td>👍👍 敬语</td></tr>
+          <tr><td>V-ましょうか</td><td>提议</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 禁止 -->
+    <div class="card">
+      <div class="card-title">禁止（禁止）</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0; font-size:.82em;">
+        <thead><tr><th>形式</th><th>强度</th></tr></thead>
+        <tbody>
+          <tr><td>V-な！</td><td>👇👇👇 直接</td></tr>
+          <tr><td>V-てはいけない</td><td>👇👇 规则</td></tr>
+          <tr><td>V-ないで</td><td>👇 请求</td></tr>
+          <tr><td>V-ないでください</td><td>👍 礼貌</td></tr>
+          <tr><td>V-ないように</td><td>👍 提醒</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 意志 -->
+    <div class="card">
+      <div class="card-title">意志·决心（意志·決心）</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0; font-size:.82em;">
+        <thead><tr><th>形式</th><th>意义</th></tr></thead>
+        <tbody>
+          <tr><td>V-辞书形</td><td>宣告决定</td></tr>
+          <tr><td>V-（よ）う</td><td>当场意志</td></tr>
+          <tr><td>V-ようと思う</td><td>打算</td></tr>
+          <tr><td>V-ようとする</td><td>正要做</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 愿望 -->
+    <div class="card">
+      <div class="card-title">愿望·希望（願望·希望）</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0; font-size:.82em;">
+        <thead><tr><th>形式</th><th>意义</th></tr></thead>
+        <tbody>
+          <tr><td>N-がほしい</td><td>想要某物</td></tr>
+          <tr><td>V-たい</td><td>想做某事</td></tr>
+          <tr><td>V-といいね</td><td>要是…就好了</td></tr>
+          <tr><td>V-ように</td><td>祝愿</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 义务 -->
+    <div class="card">
+      <div class="card-title">义务（義務）</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0; font-size:.82em;">
+        <thead><tr><th>形式</th><th>强度</th></tr></thead>
+        <tbody>
+          <tr><td>V-なければならない</td><td>客观义务</td></tr>
+          <tr><td>V-なければいけない</td><td>主观必要</td></tr>
+          <tr><td>V-ないといけない</td><td>不…不行</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+    <!-- 许可 -->
+    <div class="card">
+      <div class="card-title">许可（許可）</div>
+      <div class="tbl-wrap">
+      <table class="tbl" style="margin:0; font-size:.82em;">
+        <thead><tr><th>形式</th><th>意义</th></tr></thead>
+        <tbody>
+          <tr><td>V-てもいい</td><td>可以做</td></tr>
+          <tr><td>V-てもかまわない</td><td>没关系</td></tr>
+          <tr><td>V-なくてもいい</td><td>不做也可以</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-bunkei"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-bunkei">
+    <h4>句型学习的正确方法</h4>
+    <p>句型不是孤立的"固定搭配"，而是前面学到的基础语法（活用+助词+助动词）的<strong>自然组合</strong>。理解每个句型的构成原理，比背诵"～なければならない = 必须"更有效。</p>
+    <ul>
+      <li><span class="jp-inline">なければならない</span> = <span class="jp-inline">ない</span>（否定）的<span class="jp-inline">ば形</span>（条件）+ <span class="jp-inline">なる</span>（成为）的否定 → "不…的话就不成" → 必须</li>
+      <li><span class="jp-inline">てもいい</span> = <span class="jp-inline">て形</span> + <span class="jp-inline">も</span>（即使）+ <span class="jp-inline">いい</span>（好） → "即使…也好" → 可以做</li>
+    </ul>
+    <p>看到句型时，<strong>先拆解它的组成成分</strong>，然后再理解整体含义。这样学一个句型，等于复习了多个基础知识点。</p>
+
+    <h4>义务表达的三级强度</h4>
+    <p><span class="jp-inline">なければならない</span>·<span class="jp-inline">なければいけない</span>·<span class="jp-inline">ないといけない</span>三者都表示"必须"，但语感有微妙差异：</p>
+    <ul>
+      <li><span class="jp-inline">なければならない</span>：最正式、最客观（法律、规则）</li>
+      <li><span class="jp-inline">なければいけない</span>：较主观（个人的责任、义务感）</li>
+      <li><span class="jp-inline">ないといけない</span>：最口语化、日常对话首选</li>
+    </ul>
+    <div class="tip">
+      <strong>💡 日常口语替代方案：</strong>长串的<span class="jp-inline">なければならない</span>在口语中常缩略为<span class="jp-inline">なきゃ</span>（行かなきゃ = 必须去），简短自然。
+    </div>
+  </div>
+
+  <!-- 形式名词 -->
+  <h3 id="sec5-nominal" style="color:var(--accent5);">▎ 形式名词 — 句子名词化引擎</h3>
+  <p class="desc">形式名词把前面的句子"打包"成一个名词短语，从而接续各种助词。这是日语从简单句走向复杂句的核心机制。</p>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>词</th><th>核心含义</th><th>例句</th></tr></thead>
+    <tbody>
+      <tr><td><strong>の</strong></td><td>将用言名词化（万能）</td><td>勉強する<span style="color:#6a5a7a">の</span>が好きだ。</td></tr>
+      <tr><td><strong>こと</strong></td><td>抽象事情</td><td>彼が来た<span style="color:#6a5a7a">こと</span>を知っている。</td></tr>
+      <tr><td><strong>もの</strong></td><td>具体事物 / 道理</td><td>大切な<span style="color:#6a5a7a">もの</span>だ。</td></tr>
+      <tr><td><strong>ところ</strong></td><td>时间点</td><td>今起きた<span style="color:#6a5a7a">ところ</span>だ。</td></tr>
+      <tr><td><strong>ほう</strong></td><td>方面（比较）</td><td>こっちの<span style="color:#6a5a7a">ほう</span>がいい。</td></tr>
+      <tr><td><strong>まま</strong></td><td>原样保持</td><td>ドアを開けた<span style="color:#6a5a7a">まま</span>。</td></tr>
+      <tr><td><strong>ため</strong></td><td>目的 / 原因</td><td>健康の<span style="color:#6a5a7a">ため</span>に運動する。</td></tr>
+      <tr><td><strong>つもり</strong></td><td>打算</td><td>留学する<span style="color:#6a5a7a">つもり</span>だ。</td></tr>
+      <tr><td><strong>はず</strong></td><td>理应</td><td>もう来る<span style="color:#6a5a7a">はず</span>だ。</td></tr>
+      <tr><td><strong>うち</strong></td><td>在…之内 / 趁…</td><td>若い<span style="color:#6a5a7a">うち</span>に勉強しよう。</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <button class="detail-toggle" data-target="detail-nominal"><span class="arrow">▶</span> <span class="dt-label">📖 详解</span></button>
+  <div class="detail-panel" id="detail-nominal">
+    <h4>形式名词——日语复杂句的钥匙</h4>
+    <p>形式名词是日语中最高级的语法机制之一。它的本质是：<strong>把前面的句子当成一个名词来处理</strong>。</p>
+    <p>英语中我们说 "I know <strong>that</strong> he came"，用 that 引导从句。日语没有 that，而是用形式名词把前面的句子"打包"：<span class="jp-inline">彼が来た<strong>こと</strong>を知っている</span>（我知道他来这件事）。</p>
+
+    <h4>の vs こと——最常混淆的一对</h4>
+    <p><span class="jp-inline">の</span>和<span class="jp-inline">こと</span>都可以将句子名词化，但使用场景不同：</p>
+    <ul>
+      <li><strong>必须用の</strong>：感官动词（見える·聞こえる·感じる）、现场感知<br>
+        <span class="jp-inline">彼が走っている<strong>の</strong>が見える</span>（看到他正在跑）</li>
+      <li><strong>必须用こと</strong>：传达·思考·决定类动词（言う·伝える·決める）、抽象内容<br>
+        <span class="jp-inline">留学する<strong>こと</strong>を決めた</span>（决定留学）</li>
+      <li><strong>可互换</strong>：很多情况下の和こと都可以用，但の更口语化</li>
+    </ul>
+
+    <h4>はず vs べき——"应该"的两种面孔</h4>
+    <p>这两个都翻译为"应该"，但逻辑完全不同：</p>
+    <ul>
+      <li><span class="jp-inline"><strong>はず</strong></span>：基于逻辑推断的"应该"——"按道理说应该是这样"<br>
+        <span class="jp-inline">彼はもう着いたはずだ</span>（按时间推算，他应该已经到了）</li>
+      <li><span class="jp-inline"><strong>べき</strong></span>：基于道德/义务的"应该"——"理应这样做"<br>
+        <span class="jp-inline">約束は守るべきだ</span>（约定理应遵守——道德义务）</li>
+    </ul>
+
+    <h4>ところ——时间点标记</h4>
+    <p><span class="jp-inline">ところ</span>的精妙之处是标记动作的<strong>精确时间阶段</strong>：</p>
+    <ul>
+      <li><span class="jp-inline">V-るところだ</span>：正要做（动作前一刻）</li>
+      <li><span class="jp-inline">V-ているところだ</span>：正在做（动作进行中）</li>
+      <li><span class="jp-inline">V-たところだ</span>：刚做完（动作刚完成）</li>
+    </ul>
+
+    <div class="warn">
+      <strong>⚠ 常见偏误：</strong>把「〜たばかり」和「〜たところ」混淆。<br>
+      <span class="jp-inline">〜たばかり</span>：主观觉得"才刚"（可能实际过了几个小时）<br>
+      <span class="jp-inline">〜たところ</span>：客观"刚完成"（真的是刚刚）<br>
+      例：<span class="jp-inline">三年前に日本に来たばかりだ</span>（三年前才来日本——主观）<br>
+      <span class="jp-inline">今着いたところだ</span>（刚到——客观刚完成）
+    </div>
+  </div>
+
+  <!-- 敬语 -->
+  <h3 id="sec5-keigo" style="color:var(--accent5);">▎ 敬语体系 — 三维度礼貌</h3>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>维度</th><th>功能</th><th>机制</th><th>例</th></tr></thead>
+    <tbody>
+      <tr><td><strong>尊敬语</strong></td><td>抬高对方动作</td><td>おV-になる / 特殊动词</td><td>いらっしゃる·おっしゃる·ご覧になる</td></tr>
+      <tr><td><strong>谦让语</strong></td><td>压低己方动作</td><td>おV-する / 特殊动词</td><td>申す·いたす·お持ちする</td></tr>
+      <tr><td><strong>礼貌语</strong></td><td>语言本身礼貌化</td><td>です·ます·ございます</td><td>～です·～ます</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3 style="color:var(--accent5); font-size:.95em; margin:20px 0 8px;">▎ 敬语不规则动词对照表</h3>
+  <p class="desc">以下动词的尊敬/谦让形为不规则变化，必须单独记忆，无法套用规则。</p>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>普通形</th><th>尊敬語</th><th>謙譲語</th><th>使用场景</th></tr></thead>
+    <tbody>
+      <tr><td>行く·来る·いる</td><td><strong>いらっしゃる</strong></td><td>参る（まいる）</td><td class="cn">最常用，必记</td></tr>
+      <tr><td>言う</td><td><strong>おっしゃる</strong></td><td>申す（もうす）</td><td class="cn">日常会话高频</td></tr>
+      <tr><td>見る</td><td><strong>ご覧になる</strong></td><td>拝見する</td><td class="cn">「ご覧ください」极常用</td></tr>
+      <tr><td>食べる·飲む</td><td><strong>召し上がる</strong></td><td>いただく</td><td class="cn">餐饮场景</td></tr>
+      <tr><td>する</td><td><strong>なさる</strong></td><td>いたす</td><td class="cn">「お願いいたします」</td></tr>
+      <tr><td>知っている</td><td><strong>ご存じだ</strong></td><td>存じている</td><td class="cn">「ご存じですか」</td></tr>
+      <tr><td>くれる</td><td><strong>くださる</strong></td><td>—</td><td class="cn">授受+敬语双重功能</td></tr>
+      <tr><td>聞く</td><td>お聞きになる</td><td><strong>伺う（うかがう）</strong></td><td class="cn">拜访/询问</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3 style="color:var(--accent5); font-size:.95em; margin:20px 0 8px;">▎ 高频混淆：「ために」vs「ように」（目的）</h3>
+  <div class="grid2">
+    <div class="rule">
+      <strong>ために = 意志可控的目的</strong><br>
+      接续：V-辞书形 + ために / N + の + ために<br>
+      <span class="jp">留学する<strong>ために</strong>お金を貯める。</span><br>
+      <span class="jp">健康の<strong>ために</strong>毎日歩く。</span><br>
+      特征：前后主语一致，动作可自主控制
+    </div>
+    <div class="rule">
+      <strong>ように = 非可控的结果/目标</strong><br>
+      接续：V-辞书形/ない形 + ように<br>
+      <span class="jp">合格できる<strong>ように</strong>勉強する。</span><br>
+      <span class="jp">忘れない<strong>ように</strong>メモする。</span><br>
+      特征：结果不由意志决定（可能/不可能动词常用）
+    </div>
+  </div>
+  <div class="rule">
+    <strong>判断口诀：</strong>动作本身是目的 → <span class="jp">ために</span>；动作的结果是目的 → <span class="jp">ように</span><br>
+    例：<span class="jp">医者になる<strong>ために</strong>（成为医生——可控制）</span> vs <span class="jp">医者になれる<strong>ように</strong>（能成为医生——结果不可控）</span>
+  </div>
+
+  <!-- 最后总结 -->
+  <div class="card" style="border:2px solid var(--accent5); margin-top:32px;">
+    <div class="card-title" style="font-size:1em;">📐 语法体系完整公式</div>
+    <div class="formula-box" style="margin:0;">
+      <div class="fl">
+        <span style="color:var(--accent)">[主题]</span>
+        <span class="arrow">＋</span>
+        <span style="color:var(--accent3)">[格成分]</span>
+        <span class="arrow">＋</span>
+        <span style="color:var(--accent2)">[用言·活用形]</span>
+        <span class="arrow">＋</span>
+        <span style="color:var(--accent4)">[补助·助动词]</span>
+        <span class="arrow">＋</span>
+        <span style="color:var(--accent5)">[终助词]</span>
+      </div>
+      <div style="margin-top:10px; font-size:.82em; color:var(--text2);">
+        例：<span class="jp">私は 毎日 図書館で 日本語を 勉強して いる んだ。</span>
+      </div>
+      <div style="font-size:.78em; color:var(--text2); margin-top:4px;">
+        主题(は) → 时间 → 场所(で) → 宾语(を) → 动词て形+补助 → 说明语气(の+だ)
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<div class="footer">
+  本网页根据《日本语初级语法（最新修订版）》— 刘文照·海老原博 编著 · 华东理工大学出版社 — 整理<br>
+  以 vP·dP·cP 三层框架呈现 · 供学习参考
+</div>
+
+</main>
+</div>
+
+<!-- Back to Top -->
+<button class="back-to-top" id="backToTop" title="回到顶部" aria-label="回到顶部">↑</button>
+
+<!-- ================================================================
+     JavaScript
+     ================================================================ -->
+<script>
+(function() {
+  'use strict';
+
+  // ========== DOM refs ==========
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const hamburger = document.getElementById('hamburger');
+  const backToTop = document.getElementById('backToTop');
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
+  const searchInput = document.getElementById('searchInput');
+  const searchClear = document.getElementById('searchClear');
+  const searchCount = document.getElementById('searchCount');
+  const mainContent = document.getElementById('mainContent');
+  const secs = document.querySelectorAll('.sec');
+
+  // ========== Sidebar Toggle (mobile) ==========
+  function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('visible'); hamburger.setAttribute('aria-expanded', 'true'); document.body.classList.add('sidebar-open'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('visible'); hamburger.setAttribute('aria-expanded', 'false'); document.body.classList.remove('sidebar-open'); }
+
+  hamburger.addEventListener('click', function() {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+  overlay.addEventListener('click', closeSidebar);
+
+  // Close sidebar when a link is clicked (mobile)
+  sidebar.querySelectorAll('a').forEach(function(a) {
+    a.addEventListener('click', function() {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+
+  // ========== Sidebar Accordion ==========
+  sidebar.querySelectorAll('.sidebar-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var group = this.dataset.group;
+      var children = sidebar.querySelector('.sidebar-children[data-group="' + group + '"]');
+      var isOpen = children.classList.contains('open');
+      // Close all
+      sidebar.querySelectorAll('.sidebar-children.open').forEach(function(c) { c.classList.remove('open'); });
+      sidebar.querySelectorAll('.sidebar-toggle.open').forEach(function(b) { b.classList.remove('open'); });
+      // Open clicked if was closed
+      if (!isOpen) {
+        children.classList.add('open');
+        this.classList.add('open');
+      }
+    });
+  });
+
+  // ========== Scroll Spy + Sub-Anchor Injection ==========
+  // Auto-generate IDs for h3/h4 based on sidebar hrefs
+  (function() {
+    var subLinks = sidebar.querySelectorAll('a.sidebar-sub[href^="#"]');
+    subLinks.forEach(function(a) {
+      var href = a.getAttribute('href').replace('#', '');
+      if (!href || document.getElementById(href)) return; // skip if already exists
+      // Find the h3 or h4 text that best matches (simple approach: set id on nearest h3/h4 in target section)
+      var targetSecId = a.getAttribute('data-nav');
+      if (!targetSecId) return;
+      var sec = document.getElementById(targetSecId);
+      if (!sec) return;
+      // Find the first h3/h4 without an id
+      var headings = sec.querySelectorAll('h3, h4');
+      for (var i = 0; i < headings.length; i++) {
+        if (!headings[i].id || headings[i].id === targetSecId) {
+          headings[i].id = href;
+          break;
+        }
+      }
+    });
+  })();
+
+  function updateActiveNav() {
+    var curSection = '';
+    var scrollPos = window.scrollY + 120;
+    // Check main sections first
+    secs.forEach(function(s) {
+      if (scrollPos >= s.offsetTop) curSection = s.id;
+    });
+    // Then check sub-headings for finer granularity
+    var allSubLinks = sidebar.querySelectorAll('a.sidebar-sub[href^="#"]');
+    allSubLinks.forEach(function(a) {
+      var href = a.getAttribute('href').replace('#', '');
+      var el = document.getElementById(href);
+      if (el && scrollPos >= el.offsetTop) curSection = a.getAttribute('data-nav');
+    });
+    // Update sidebar links
+    sidebar.querySelectorAll('a[data-nav]').forEach(function(a) {
+      a.classList.toggle('active', a.dataset.nav === curSection);
+    });
+  }
+
+  // rAF-throttled scroll: 合并 updateActiveNav / backToTop / progressBar
+  var scrollTicking = false;
+  window.addEventListener('scroll', function() {
+    if (!scrollTicking) {
+      requestAnimationFrame(function() {
+        updateActiveNav();
+
+        var show = window.scrollY > 400;
+        backToTop.classList.toggle('visible', show);
+
+        var bar = document.getElementById('progressBarFill');
+        if (bar) {
+          var st = window.scrollY || document.documentElement.scrollTop;
+          var dh = document.documentElement.scrollHeight - window.innerHeight;
+          bar.style.width = (dh > 0 ? Math.min(100, Math.round((st / dh) * 100)) : 0) + '%';
+        }
+
+        scrollTicking = false;
+      });
+      scrollTicking = true;
+    }
+  }, { passive: true });
+
+  backToTop.addEventListener('click', function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  // ========== Dark Mode ==========
+  function applyTheme(dark) {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    themeIcon.textContent = dark ? '☀️' : '🌙';
+    themeLabel.textContent = dark ? '亮色' : '暗色';
+    localStorage.setItem('grammar-theme', dark ? 'dark' : 'light');
+  }
+
+  var savedTheme = localStorage.getItem('grammar-theme');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+  applyTheme(isDark);
+
+  themeToggle.addEventListener('click', function() {
+    var currentlyDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    applyTheme(!currentlyDark);
+  });
+
+  // ========== 振假名标注系统 (Furigana) ==========
+  (function() {
+    // ---- 多音词 Override 词典（完整词 → ruby HTML）----
+    // 规则：key 为完整的词形（含送假名），value 为预生成的 ruby HTML
+    var OVERRIDE = {
+      // == 行（3 种读音）==
+      '行く': '<ruby>行<rt>い</rt></ruby>く',
+      '行う': '<ruby>行<rt>おこな</rt></ruby>う',
+      '行った': '<ruby>行<rt>い</rt></ruby>った',
+      '行って': '<ruby>行<rt>い</rt></ruby>って',
+      '行っている': '<ruby>行<rt>い</rt></ruby>っている',
+      '行き': '<ruby>行<rt>い</rt></ruby>き',
+      // == 入 ==
+      '入る': '<ruby>入<rt>はい</rt></ruby>る',
+      '入れる': '<ruby>入<rt>い</rt></ruby>れる',
+      '入って': '<ruby>入<rt>はい</rt></ruby>って',
+      // == 着 ==
+      '着く': '<ruby>着<rt>つ</rt></ruby>く',
+      '着る': '<ruby>着<rt>き</rt></ruby>る',
+      '着いた': '<ruby>着<rt>つ</rt></ruby>いた',
+      // == 出 ==
+      '出る': '<ruby>出<rt>で</rt></ruby>る',
+      '出す': '<ruby>出<rt>だ</rt></ruby>す',
+      // == 開 ==
+      '開く': '<ruby>開<rt>あ</rt></ruby>く',
+      '開ける': '<ruby>開<rt>あ</rt></ruby>ける',
+      '開いた': '<ruby>開<rt>あ</rt></ruby>いた',
+      '開いて': '<ruby>開<rt>あ</rt></ruby>いて',
+      '開いている': '<ruby>開<rt>あ</rt></ruby>いている',
+      '開けて': '<ruby>開<rt>あ</rt></ruby>けて',
+      '開けてある': '<ruby>開<rt>あ</rt></ruby>けてある',
+      // == 閉 ==
+      '閉まる': '<ruby>閉<rt>し</rt></ruby>まる',
+      '閉める': '<ruby>閉<rt>し</rt></ruby>める',
+      '閉まった': '<ruby>閉<rt>し</rt></ruby>まった',
+      '閉めた': '<ruby>閉<rt>し</rt></ruby>めた',
+      // == 始 ==
+      '始まる': '<ruby>始<rt>はじ</rt></ruby>まる',
+      '始める': '<ruby>始<rt>はじ</rt></ruby>める',
+      // == 分 ==
+      '分かる': '<ruby>分<rt>わ</rt></ruby>かる',
+      '分ける': '<ruby>分<rt>わ</rt></ruby>ける',
+      // == 落 ==
+      '落ちる': '<ruby>落<rt>お</rt></ruby>ちる',
+      '落とす': '<ruby>落<rt>お</rt></ruby>とす',
+      // == 変 ==
+      '変わる': '<ruby>変<rt>か</rt></ruby>わる',
+      '変える': '<ruby>変<rt>か</rt></ruby>える',
+      // == Ⅰ类伪装者（看似Ⅱ类，实为Ⅰ类五段）==
+      '帰る': '<ruby>帰<rt>かえ</rt></ruby>る',
+      '帰らない': '<ruby>帰<rt>かえ</rt></ruby>らない',
+      '切る': '<ruby>切<rt>き</rt></ruby>る',
+      '切らない': '<ruby>切<rt>き</rt></ruby>らない',
+      '知る': '<ruby>知<rt>し</rt></ruby>る',
+      '走る': '<ruby>走<rt>はし</rt></ruby>る',
+      '減る': '<ruby>減<rt>へ</rt></ruby>る',
+      '要る': '<ruby>要<rt>い</rt></ruby>る',
+      '滑る': '<ruby>滑<rt>すべ</rt></ruby>る',
+      '限る': '<ruby>限<rt>かぎ</rt></ruby>る',
+      '練る': '<ruby>練<rt>ね</rt></ruby>る',
+      // == する（不规则）==
+      'する': '<ruby></ruby>する',
+      'している': '<ruby></ruby>している',
+      '勉強する': '<ruby>勉強<rt>べんきょう</rt></ruby>する',
+      '散歩する': '<ruby>散歩<rt>さんぽ</rt></ruby>する',
+      '連絡する': '<ruby>連絡<rt>れんらく</rt></ruby>する',
+      '理解する': '<ruby>理解<rt>りかい</rt></ruby>する',
+      '卒業する': '<ruby>卒業<rt>そつぎょう</rt></ruby>する',
+      '留学する': '<ruby>留学<rt>りゅうがく</rt></ruby>する',
+      '結婚する': '<ruby>結婚<rt>けっこん</rt></ruby>する',
+      // == 来る ==
+      '来る': '<ruby>来<rt>く</rt></ruby>る',
+      '来た': '<ruby>来<rt>き</rt></ruby>た',
+      '来て': '<ruby>来<rt>き</rt></ruby>て',
+      '来ている': '<ruby>来<rt>き</rt></ruby>ている',
+      // == くれる ==
+      'くれる': '<ruby></ruby>くれる',
+      'あげる': '<ruby></ruby>あげる',
+      'もらう': '<ruby></ruby>もらう',
+      // == する衍生（不规则）==
+      'やります': '<ruby></ruby>やります',
+      // == 美味しい/美味しそう ==
+      '美味しい': '<ruby>美味<rt>おい</rt></ruby>しい',
+      '美味しそうだ': '<ruby>美味<rt>おい</rt></ruby>しそうだ',
+      '美味しいそうだ': '<ruby>美味<rt>おい</rt></ruby>しい<ruby></ruby>そうだ',
+      // == 高い/高かった/高く ==
+      '高い': '<ruby>高<rt>たか</rt></ruby>い',
+      '高かった': '<ruby>高<rt>たか</rt></ruby>かった',
+      '高く': '<ruby>高<rt>たか</rt></ruby>く',
+      // == 大き/小さ ==
+      '大きな': '<ruby>大<rt>おお</rt></ruby>きな',
+      // == 静か ==
+      '静か': '<ruby>静<rt>しず</rt></ruby>か',
+      '静かな': '<ruby>静<rt>しず</rt></ruby>かな',
+      '静かだ': '<ruby>静<rt>しず</rt></ruby>かだ',
+      // == 健康 ==
+      '健康': '<ruby>健<rt>けん</rt></ruby><ruby>康<rt>こう</rt></ruby>',
+      '健康だ': '<ruby>健<rt>けん</rt></ruby><ruby>康<rt>こう</rt></ruby>だ',
+      '健康のために': '<ruby>健<rt>けん</rt></ruby><ruby>康<rt>こう</rt></ruby>のために',
+      // == 熱 ==
+      '熱がある': '<ruby>熱<rt>ねつ</rt></ruby>がある',
+    };
+
+    // ---- 通用汉字读音表（字符级 fallback）----
+    var KANJI = {
+      '雨': 'あめ',
+      '飴': 'あめ',
+      '上': 'うえ',
+      '浦': 'うら',
+      '絵': 'え',
+      '男': 'おとこ',
+      '女': 'おんな',
+      '音': 'おと',
+      '下': 'した',
+      '川': 'かわ',
+      '海': 'うみ',
+      '山': 'やま',
+      '谷': 'たに',
+      '空': 'そら',
+      '天': 'てん',
+      '地': 'ち',
+      '人': 'ひと',
+      '子': 'こ',
+      '日': 'にち',
+      '月': 'つき',
+      '火': 'ひ',
+      '水': 'みず',
+      '木': 'き',
+      '金': 'かね',
+      '土': 'つち',
+      '年': 'とし',
+      '時': 'とき',
+      '間': 'かん',
+      '分': 'わ',
+      '今': 'いま',
+      '先': 'さき',
+      '前': 'まえ',
+      '後': 'あと',
+      '中': 'なか',
+      '外': 'そと',
+      '内': 'うち',
+      '左': 'ひだり',
+      '右': 'みぎ',
+      '大': 'おお',
+      '小': 'ちい',
+      '多': 'おお',
+      '少': 'すく',
+      '新': 'あたら',
+      '古': 'ふる',
+      '長': 'なが',
+      '短': 'みじか',
+      '遠': 'とお',
+      '近': 'ちか',
+      '早': 'はや',
+      '遅': 'おそ',
+      '高': 'たか',
+      '低': 'ひく',
+      '安': 'やす',
+      '白': 'しろ',
+      '黒': 'くろ',
+      '赤': 'あか',
+      '青': 'あお',
+      '黄': 'き',
+      '緑': 'みどり',
+      '色': 'いろ',
+      '見': 'み',
+      '聞': 'き',
+      '読': 'よ',
+      '書': 'か',
+      '話': 'はな',
+      '食': 'た',
+      '飲': 'の',
+      '買': 'か',
+      '売': 'う',
+      '立': 'た',
+      '座': 'すわ',
+      '歩': 'ある',
+      '走': 'はし',
+      '飛': 'と',
+      '乗': 'の',
+      '降': 'お',
+      '出': 'で',
+      '入': 'はい',
+      '開': 'あ',
+      '閉': 'し',
+      '曲': 'ま',
+      '止': 'と',
+      '待': 'ま',
+      '持': 'も',
+      '使': 'つか',
+      '作': 'つく',
+      '送': 'おく',
+      '届': 'とど',
+      '渡': 'わた',
+      '通': 'とお',
+      '会': 'あ',
+      '帰': 'かえ',
+      '来': 'く',
+      '行': 'い',
+      '着': 'つ',
+      '住': 'す',
+      '死': 'し',
+      '生': 'い',
+      '寝': 'ね',
+      '起': 'お',
+      '遊': 'あそ',
+      '働': 'はたら',
+      '休': 'やす',
+      '習': 'なら',
+      '教': 'おし',
+      '覚': 'おぼ',
+      '忘': 'わす',
+      '考': 'かんが',
+      '思': 'おも',
+      '知': 'し',
+      '笑': 'わら',
+      '泣': 'な',
+      '怒': 'おこ',
+      '褒': 'ほ',
+      '叱': 'しか',
+      '頼': 'たの',
+      '謝': 'あやま',
+      '許': 'ゆる',
+      '守': 'まも',
+      '捨': 'す',
+      '拾': 'ひろ',
+      '落': 'お',
+      '倒': 'たお',
+      '壊': 'こわ',
+      '割': 'わ',
+      '切': 'き',
+      '折': 'お',
+      '回': 'まわ',
+      '始': 'はじ',
+      '終': 'お',
+      '続': 'つづ',
+      '変': 'か',
+      '換': 'か',
+      '替': 'か',
+      '代': 'か',
+      '決': 'き',
+      '選': 'えら',
+      '並': 'なら',
+      '消': 'け',
+      '付': 'つ',
+      '取': 'と',
+      '受': 'う',
+      '本': 'ほん',
+      '語': 'ご',
+      '学': 'がく',
+      '校': 'こう',
+      '友': 'とも',
+      '達': 'だち',
+      '供': 'ども',
+      '一': 'いち',
+      '二': 'に',
+      '三': 'さん',
+      '四': 'よん',
+      '五': 'ご',
+      '六': 'ろく',
+      '七': 'なな',
+      '八': 'はち',
+      '九': 'きゅう',
+      '十': 'じゅう',
+      '百': 'ひゃく',
+      '千': 'せん',
+      '万': 'まん',
+      '円': 'えん',
+      '駅': 'えき',
+      '電': 'でん',
+      '車': 'しゃ',
+      '道': 'みち',
+      '町': 'まち',
+      '市': 'し',
+      '区': 'く',
+      '県': 'けん',
+      '都': 'と',
+      '府': 'ふ',
+      '東': 'ひがし',
+      '西': 'にし',
+      '南': 'みなみ',
+      '北': 'きた',
+      '京': 'きょう',
+      '国': 'くに',
+      '田': 'た',
+      '村': 'むら',
+      '林': 'はやし',
+      '森': 'もり',
+      '花': 'はな',
+      '草': 'くさ',
+      '石': 'いし',
+      '岩': 'いわ',
+      '紙': 'かみ',
+      '机': 'つくえ',
+      '窓': 'まど',
+      '壁': 'かべ',
+      '門': 'もん',
+      '家': 'いえ',
+      '部': 'へ',
+      '屋': 'や',
+      '店': 'みせ',
+      '場': 'ば',
+      '所': 'ところ',
+      '図': 'と',
+      '館': 'かん',
+      '園': 'えん',
+      '堂': 'どう',
+      '心': 'こころ',
+      '気': 'き',
+      '手': 'て',
+      '足': 'あし',
+      '目': 'め',
+      '耳': 'みみ',
+      '口': 'くち',
+      '鼻': 'はな',
+      '顔': 'かお',
+      '体': 'からだ',
+      '頭': 'あたま',
+      '指': 'ゆび',
+      '輪': 'わ',
+      '服': 'ふく',
+      '靴': 'くつ',
+      '飯': 'はん',
+      '肉': 'にく',
+      '魚': 'さかな',
+      '卵': 'たまご',
+      '茶': 'ちゃ',
+      '酒': 'さけ',
+      '菓': 'か',
+      '料': 'りょう',
+      '理': 'り',
+      '味': 'あじ',
+      '甘': 'あま',
+      '辛': 'から',
+      '塩': 'しお',
+      '油': 'あぶら',
+      '醤': 'しょう',
+      '医': 'い',
+      '者': 'しゃ',
+      '病': 'びょう',
+      '院': 'いん',
+      '薬': 'くすり',
+      '熱': 'ねつ',
+      '風': 'かぜ',
+      '邪': 'じゃ',
+      '痛': 'いた',
+      '勉': 'べん',
+      '強': 'きょう',
+      '散': 'さん',
+      '連': 'れん',
+      '絡': 'らく',
+      '留': 'りゅう',
+      '映': 'えい',
+      '画': 'が',
+      '楽': 'がく',
+      '歌': 'うた',
+      '踊': 'おど',
+      '描': 'か',
+      '撮': 'と',
+      '旅': 'たび',
+      '約': 'やく',
+      '束': 'そく',
+      '予': 'よ',
+      '定': 'てい',
+      '仕': 'し',
+      '事': 'ごと',
+      '議': 'ぎ',
+      '社': 'しゃ',
+      '課': 'か',
+      '係': 'かかり',
+      '員': 'いん',
+      '客': 'きゃく',
+      '質': 'しつ',
+      '問': 'もん',
+      '答': 'こた',
+      '説': 'せつ',
+      '明': 'めい',
+      '科': 'か',
+      '試': 'し',
+      '験': 'けん',
+      '合': 'ごう',
+      '点': 'てん',
+      '数': 'すう',
+      '文': 'ぶん',
+      '字': 'じ',
+      '辞': 'じ',
+      '単': 'たん',
+      '意': 'い',
+      '表': 'ひょう',
+      '現': 'げん',
+      '記': 'き',
+      '録': 'ろく',
+      '報': 'ほう',
+      '告': 'こく',
+      '由': 'ゆう',
+      '方': 'ほう',
+      '法': 'ほう',
+      '比': 'ひ',
+      '較': 'かく',
+      '違': 'ちが',
+      '同': 'おな',
+      '似': 'に',
+      '全': 'ぜん',
+      '努': 'ど',
+      '力': 'りょく',
+      '失': 'しつ',
+      '敗': 'ぱい',
+      '成': 'せい',
+      '功': 'こう',
+      '完': 'かん',
+      '簡': 'かん',
+      '複': 'ふく',
+      '雑': 'ざつ',
+      '便': 'べん',
+      '利': 'り',
+      '不': 'ふ',
+      '必': 'ひつ',
+      '要': 'よう',
+      '重': 'じゅう',
+      '軽': 'かる',
+      '太': 'ふと',
+      '細': 'ほそ',
+      '広': 'ひろ',
+      '狭': 'せま',
+      '深': 'ふか',
+      '浅': 'あさ',
+      '厚': 'あつ',
+      '薄': 'うす',
+      '暑': 'あつ',
+      '寒': 'さむ',
+      '暖': 'あたた',
+      '涼': 'すず',
+      '忙': 'いそが',
+      '暇': 'ひま',
+      '賑': 'にぎ',
+      '静': 'しず',
+      '寂': 'さび',
+      '嬉': 'うれ',
+      '悲': 'かな',
+      '怖': 'こわ',
+      '恥': 'は',
+      '難': 'むずか',
+      '易': 'やさ',
+      '正': 'ただ',
+      '悪': 'わる',
+      '良': 'よ',
+      '丁': 'てい',
+      '未': 'み',
+      '毎': 'まい',
+      '週': 'しゅう',
+      '曜': 'よう',
+      '昨': 'さく',
+      '去': 'きょ',
+      '度': 'ど',
+      '番': 'ばん',
+      '枚': 'まい',
+      '冊': 'さつ',
+      '台': 'だい',
+      '杯': 'はい',
+      '象': 'ぞう',
+      '塵': 'ちり',
+      '積': 'つ',
+      '実': 'み',
+      '米': 'こめ',
+      '煙': 'けむり',
+      '霧': 'きり',
+      '涙': 'なみだ',
+      '汗': 'あせ',
+      '命': 'いのち',
+      '首': 'くび',
+      '髪': 'かみ',
+      '爪': 'つめ',
+      '背': 'せ',
+      '腹': 'はら',
+      '腕': 'うで',
+      '膝': 'ひざ',
+      '肩': 'かた',
+      '苦': 'くる',
+      '危': 'あぶ',
+      '頑': 'がん',
+      '張': 'ば',
+      '驚': 'おどろ',
+      '恐': 'おそ',
+      '郵': 'ゆう',
+      '局': 'きょく',
+      '銀': 'ぎん',
+      '公': 'こう',
+      '駐': 'ちゅう',
+      '禁': 'きん',
+      '角': 'かど',
+      '隅': 'すみ',
+      '端': 'はし',
+      '奥': 'おく',
+      '真': 'ま',
+      '向': 'む',
+      '隣': 'となり',
+      '周': 'まわ',
+      '辺': 'あた',
+      '無': 'む',
+      '駄': 'だ',
+      '返': 'かえ',
+      '卒': 'そつ',
+      '業': 'ぎょう',
+      '練': 'ね',
+      '滑': 'すべ',
+      '減': 'へ',
+      '限': 'かぎ',
+    };
+
+    // ---- 通用二字以上熟语词典（复合词优先）----
+    var COMPOUND = {
+      '日本語': 'にほんご', '英語': 'えいご', '中国語': 'ちゅうごくご',
+      '学校': 'がっこう', '教室': 'きょうしつ', '図書館': 'としょかん',
+      '先生': 'せんせい', '学生': 'がくせい', '友達': 'ともだち',
+      '子供': 'こども', '大人': 'おとな', '家族': 'かぞく',
+      '大切': 'たいせつ', '不便': 'ふべん', '便利': 'べんり',
+      '簡単': 'かんたん', '複雑': 'ふくざつ', '必要': 'ひつよう',
+      '数学': 'すうがく', '教科書': 'きょうかしょ', '試験': 'しけん',
+      '合格': 'ごうかく', '留学': 'りゅうがく', '勉強': 'べんきょう',
+      '散歩': 'さんぽ', '連絡': 'れんらく', '理解': 'りかい',
+      '社長': 'しゃちょう', '会社': 'かいしゃ', '病院': 'びょういん',
+      '映画': 'えいが', '手紙': 'てがみ', '料理': 'りょうり',
+      '約束': 'やくそく', '未来': 'みらい', '笑顔': 'えがお',
+      '努力': 'どりょく', '成功': 'せいこう', '失敗': 'しっぱい',
+      '完成': 'かんせい', '中止': 'ちゅうし', '会議': 'かいぎ',
+      '日曜日': 'にちようび', '毎日': 'まいにち', '三年前': 'さんねんまえ',
+      '東京': 'とうきょう', '大阪': 'おおさか', '日本': 'にほん',
+      '大学': 'だいがく', '高校': 'こうこう', '中学': 'ちゅうがく',
+      '卒業': 'そつぎょう', '結婚': 'けっこん', '病気': 'びょうき',
+      '石油': 'せきゆ', '千円': 'せんえん', '午後': 'ごご',
+    };
+
+    // ---- 核心处理函数 ----
+    function buildRuby(text) {
+      // Step 1: 尝试 override 词典最长匹配
+      var i = 0, result = '';
+      var maxWordLen = 8;
+      while (i < text.length) {
+        var matched = false;
+        // Try longest match in OVERRIDE
+        for (var len = Math.min(maxWordLen, text.length - i); len >= 2; len--) {
+          var word = text.slice(i, i + len);
+          if (OVERRIDE.hasOwnProperty(word)) {
+            result += OVERRIDE[word];
+            i += len;
+            matched = true;
+            break;
+          }
+        }
+        if (matched) continue;
+
+        // Try COMPOUND dictionary
+        for (var len2 = Math.min(4, text.length - i); len2 >= 2; len2--) {
+          var cword = text.slice(i, i + len2);
+          if (COMPOUND.hasOwnProperty(cword)) {
+            // Generate ruby for compound
+            var reading = COMPOUND[cword];
+            var kIdx = 0, cRuby = '';
+            for (var ci = 0; ci < cword.length; ci++) {
+              var ch = cword[ci];
+              if (KANJI.hasOwnProperty(ch) || /[\u4e00-\u9fff]/.test(ch)) {
+                // Find corresponding reading segment
+                var rLen = 0;
+                if (kIdx < reading.length) { rLen = 1; }
+                // Simple heuristic: distribute reading evenly
+                var kanjiCount = 0;
+                for (var cj = 0; cj < cword.length; cj++) {
+                  if (/[\u4e00-\u9fff]/.test(cword[cj])) kanjiCount++;
+                }
+                var segLen = Math.floor(reading.length / kanjiCount);
+                var remainder = reading.length % kanjiCount;
+                var start = 0;
+                var kj = 0;
+                for (var cj2 = 0; cj2 < ci; cj2++) {
+                  if (/[\u4e00-\u9fff]/.test(cword[cj2])) kj++;
+                }
+                start = kj * segLen + Math.min(kj, remainder);
+                var end = start + segLen + (kj < remainder ? 1 : 0);
+                var seg = reading.slice(start, end);
+                cRuby += '<ruby>' + ch + '<rt>' + seg + '</rt></ruby>';
+              } else {
+                cRuby += ch;
+              }
+            }
+            result += cRuby;
+            i += len2;
+            matched = true;
+            break;
+          }
+        }
+        if (matched) continue;
+
+        // Step 3: Character-level KANJI fallback
+        var ch2 = text[i];
+        if (KANJI.hasOwnProperty(ch2)) {
+          result += '<ruby>' + ch2 + '<rt>' + KANJI[ch2] + '</rt></ruby>';
+        } else {
+          result += ch2;
+        }
+        i++;
+      }
+      return result;
+    }
+
+    // ---- 批量处理 ----
+    function processFurigana() {
+      var sel = '.jp, .jp-inline, .jpex';
+      // Exclude: already processed, sidebar, toast, code blocks
+      document.querySelectorAll(sel).forEach(function(el) {
+        if (el.closest('.sidebar') || el.closest('.toast-container') ||
+            el.closest('code') || el.closest('pre') || el.hasAttribute('data-furigana-done')) return;
+        var text = el.textContent;
+        // Skip if no kanji
+        if (!/[\u4e00-\u9fff]/.test(text)) return;
+        var ruby = buildRuby(text);
+        if (ruby !== text) {
+          el.innerHTML = ruby;
+          el.setAttribute('data-furigana-done', '1');
+        }
+      });
+    }
+
+    // ---- 三档切换 ----
+    var FURIGANA_KEY = 'grammar-furigana';
+    var currentMode = localStorage.getItem(FURIGANA_KEY) || 'on';
+    var toggleBtn = document.getElementById('furiganaToggle');
+    var toggleLabel = document.getElementById('furiganaLabel');
+    var modeLabels = { 'on': 'ふりがな', 'off': 'ふりがな', 'touch': 'タッチ' };
+    var modeTitles = { 'on': '振假名：始终显示', 'off': '振假名：隐藏', 'touch': '振假名：长按/hover显示' };
+
+    function applyFuriganaMode(mode) {
+      document.documentElement.setAttribute('data-furigana', mode);
+      if (toggleBtn) toggleBtn.setAttribute('data-mode', mode);
+      if (toggleLabel) toggleLabel.textContent = modeLabels[mode];
+      if (toggleBtn) toggleBtn.title = modeTitles[mode];
+      localStorage.setItem(FURIGANA_KEY, mode);
+      currentMode = mode;
+    }
+
+    function cycleFuriganaMode() {
+      var modes = ['on', 'touch', 'off'];
+      var idx = modes.indexOf(currentMode);
+      var next = modes[(idx + 1) % 3];
+      applyFuriganaMode(next);
+      showToast('振假名：' + modeTitles[next].split('：')[1]);
+    }
+
+    // ---- TOUCH 模式：移动端长按 / 桌面端 hover ----
+    function setupTouchMode() {
+      var pressTimer = null;
+      var activeEl = null;
+
+      // Event delegation on body (covers existing + future elements)
+      document.body.addEventListener('touchstart', function(e) {
+        if (currentMode !== 'touch') return;
+        var target = e.target.closest('.jp, .jp-inline, .jpex');
+        if (!target) return;
+        activeEl = target;
+        pressTimer = setTimeout(function() {
+          target.classList.add('show-furigana');
+        }, 300);
+      }, { passive: true });
+
+      document.body.addEventListener('touchend', function() {
+        clearTimeout(pressTimer);
+        if (activeEl) { activeEl.classList.remove('show-furigana'); activeEl = null; }
+      });
+
+      document.body.addEventListener('touchmove', function() {
+        clearTimeout(pressTimer);
+        if (activeEl) { activeEl.classList.remove('show-furigana'); activeEl = null; }
+      }, { passive: true });
+    }
+
+    // ---- 初始化 ----
+    processFurigana();
+    applyFuriganaMode(currentMode);
+    setupTouchMode();
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', cycleFuriganaMode);
+    }
+
+    // Re-process after detail panels expand (new content may appear)
+    var detailObserver = new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        if (m.type === 'childList' && m.addedNodes.length) {
+          processFurigana();
+        }
+      });
+    });
+    document.querySelectorAll('.detail-panel, .case-detail').forEach(function(panel) {
+      detailObserver.observe(panel, { childList: true, subtree: true });
+    });
+
+    // Expose for external use
+    window.processFurigana = processFurigana;
+  })();
+
+  // ========== Search 重写 (下拉面板 + 历史 + 键盘导航) ==========
+  var searchTimeout;
+  var searchIdx = [];       // [{sectionId, title, text, el}]
+  var searchHistory = [];
+  var dropdownActiveIdx = -1;
+  var dropdown = document.getElementById('searchDropdown');
+
+  // Load search history
+  try { searchHistory = JSON.parse(localStorage.getItem('wb-search-hist') || '[]'); } catch(e) { searchHistory = []; }
+
+  // Build search index
+  function buildSearchIndex() {
+    searchIdx = [];
+    document.querySelectorAll('[data-searchable]').forEach(function(sec) {
+      var h2 = sec.querySelector('h2');
+      var title = h2 ? h2.textContent.trim() : (sec.id || '');
+      var text = sec.textContent.replace(/\s+/g, ' ').trim();
+      searchIdx.push({ sectionId: sec.id, title: title, text: text, el: sec });
+    });
+  }
+  buildSearchIndex();
+
+  // Search history
+  function saveHistory(term) {
+    searchHistory = searchHistory.filter(function(t) { return t !== term; });
+    searchHistory.unshift(term);
+    if (searchHistory.length > 8) searchHistory.pop();
+    try { localStorage.setItem('wb-search-hist', JSON.stringify(searchHistory)); } catch(e) {}
+  }
+  function deleteHistoryItem(term, e) {
+    e.stopPropagation();
+    searchHistory = searchHistory.filter(function(t) { return t !== term; });
+    try { localStorage.setItem('wb-search-hist', JSON.stringify(searchHistory)); } catch(e) {}
+    renderDropdown();
+  }
+
+  function clearHighlights() {
+    mainContent.querySelectorAll('.search-highlight').forEach(function(el) {
+      var parent = el.parentNode;
+      parent.replaceChild(document.createTextNode(el.textContent), el);
+      parent.normalize();
+    });
+  }
+
+  function getSnippet(text, term, maxLen) {
+    maxLen = maxLen || 100;
+    var idx = text.toLowerCase().indexOf(term.toLowerCase());
+    if (idx === -1) return text.slice(0, maxLen) + '...';
+    var start = Math.max(0, idx - 25);
+    var end = Math.min(text.length, idx + term.length + 25);
+    var snippet = (start > 0 ? '...' : '') + text.slice(start, end) + (end < text.length ? '...' : '');
+    return snippet;
+  }
+
+  function getSectionIcon(id) {
+    if (id === 'sec0') return { icon: '🏠', cls: 'sdi-sec0' };
+    if (id === 'sec1') return { icon: '①', cls: 'sdi-sec1' };
+    if (id === 'sec2') return { icon: '②', cls: 'sdi-sec2' };
+    if (id === 'sec3') return { icon: '③', cls: 'sdi-sec3' };
+    if (id === 'sec4') return { icon: '④', cls: 'sdi-sec4' };
+    if (id === 'sec5') return { icon: '⑤', cls: 'sdi-sec5' };
+    return { icon: '📌', cls: 'sdi-sec0' };
+  }
+
+  function renderDropdown(results, term) {
+    if (!term && searchHistory.length === 0) { dropdown.classList.remove('open'); return; }
+    if (!term && searchHistory.length > 0) {
+      // Show history
+      var h = '<div class="search-dropdown-history-label">🕐 最近搜索</div>';
+      searchHistory.forEach(function(t) {
+        h += '<div class="search-dropdown-history-item" data-term="' + t + '"><span>' + t + '</span><button class="sh-del">✕</button></div>';
+      });
+      dropdown.innerHTML = h;
+      dropdown.classList.add('open');
+      dropdownActiveIdx = -1;
+      return;
+    }
+    if (!results || results.length === 0) {
+      dropdown.innerHTML = '<div class="search-dropdown-empty">未找到匹配的语法点</div>';
+      dropdown.classList.add('open');
+      dropdownActiveIdx = -1;
+      return;
+    }
+    var h = '';
+    results.forEach(function(r, i) {
+      var si = getSectionIcon(r.sectionId);
+      var pathMap = { 'sec0':'框架总览', 'sec1':'词类体系(vP/dP)', 'sec2':'活用体系(vP)', 'sec3':'格与助词(dP)', 'sec4':'时态·体·态(vP)', 'sec5':'句型体系(cP)' };
+      var path = pathMap[r.sectionId] || '';
+      h += '<div class="search-dropdown-item' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '" data-section="' + r.sectionId + '">';
+      h += '<div class="sdi-icon ' + si.cls + '">' + si.icon + '</div>';
+      h += '<div class="sdi-body"><div class="sdi-title">' + r.title + '</div>';
+      h += '<div class="sdi-path">' + path + '</div>';
+      h += '<div class="sdi-snippet">' + getSnippet(r.text, term) + '</div></div>';
+      h += '</div>';
+    });
+    dropdown.innerHTML = h;
+    dropdown.classList.add('open');
+    dropdownActiveIdx = 0;
+  }
+
+  function doSearch(term) {
+    clearHighlights();
+    dropdownActiveIdx = -1;
+
+    if (!term || term.length < 1) {
+      document.querySelectorAll('[data-searchable]').forEach(function(s) { s.classList.remove('section-hidden'); });
+      document.querySelectorAll('.card').forEach(function(c) { c.closest('.sec') ? null : c.style.display = ''; });
+      searchClear.classList.remove('visible');
+      searchCount.classList.remove('visible');
+      renderDropdown([], '');
+      return;
+    }
+
+    searchClear.classList.add('visible');
+    var lowerTerm = term.toLowerCase();
+    var results = [];
+    var matchCount = 0;
+    var firstMatch = null;
+
+    searchIdx.forEach(function(item) {
+      var text = item.text.toLowerCase();
+      var hasMatch = text.includes(lowerTerm);
+      if (hasMatch) {
+        results.push(item);
+        matchCount++;
+        item.el.classList.remove('section-hidden');
+
+        var walker = document.createTreeWalker(item.el, NodeFilter.SHOW_TEXT, {
+          acceptNode: function(node) {
+            /* 排除 <rt> 和 <rp> 内的文本节点，避免高亮破坏振假名结构 */
+            var p = node.parentNode;
+            while (p && p !== item.el) {
+              var tag = p.nodeName.toUpperCase();
+              if (tag === 'RT' || tag === 'RP') return NodeFilter.FILTER_REJECT;
+              p = p.parentNode;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }, false);
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(function(node) {
+          var txt = node.textContent;
+          var idx = txt.toLowerCase().indexOf(lowerTerm);
+          if (idx === -1) return;
+          if (!firstMatch) firstMatch = node.parentNode;
+          var fragment = document.createDocumentFragment();
+          var lastIdx = 0;
+          while (idx !== -1) {
+            if (idx > lastIdx) fragment.appendChild(document.createTextNode(txt.slice(lastIdx, idx)));
+            var mark = document.createElement('mark');
+            mark.className = 'search-highlight';
+            mark.textContent = txt.slice(idx, idx + term.length);
+            fragment.appendChild(mark);
+            lastIdx = idx + term.length;
+            idx = txt.toLowerCase().indexOf(lowerTerm, lastIdx);
+          }
+          if (lastIdx < txt.length) fragment.appendChild(document.createTextNode(txt.slice(lastIdx)));
+          node.parentNode.replaceChild(fragment, node);
+        });
+
+        item.el.querySelectorAll('.card').forEach(function(c) {
+          c.style.display = c.textContent.toLowerCase().includes(lowerTerm) ? '' : 'none';
+        });
+      } else {
+        item.el.classList.add('section-hidden');
+      }
+    });
+
+    if (matchCount > 0) {
+      searchCount.textContent = matchCount;
+      searchCount.classList.add('visible');
+    } else {
+      searchCount.classList.remove('visible');
+    }
+
+    renderDropdown(results, term);
+    if (firstMatch) firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // Input handler
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    var term = this.value.trim();
+    searchTimeout = setTimeout(function() { doSearch(term); }, 200);
+  });
+
+  // Focus handler - show history
+  searchInput.addEventListener('focus', function() {
+    if (!this.value.trim()) renderDropdown([], '');
+  });
+
+  // Clear button
+  searchClear.addEventListener('click', function() {
+    searchInput.value = '';
+    doSearch('');
+    searchInput.focus();
+  });
+
+  // Click outside to close dropdown
+  document.addEventListener('click', function(e) {
+    if (!dropdown.contains(e.target) && e.target !== searchInput) {
+      dropdown.classList.remove('open');
+    }
+  });
+
+  // Dropdown item click
+  dropdown.addEventListener('click', function(e) {
+    var item = e.target.closest('.search-dropdown-item');
+    if (item) {
+      var sectionId = item.getAttribute('data-section');
+      var el = document.getElementById(sectionId);
+      if (el) {
+        saveHistory(searchInput.value.trim());
+        dropdown.classList.remove('open');
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+    var histItem = e.target.closest('.search-dropdown-history-item');
+    if (histItem && !e.target.closest('.sh-del')) {
+      var t = histItem.getAttribute('data-term');
+      searchInput.value = t;
+      doSearch(t);
+      dropdown.classList.remove('open');
+    }
+    var delBtn = e.target.closest('.sh-del');
+    if (delBtn) {
+      var hi = delBtn.closest('.search-dropdown-history-item');
+      if (hi) deleteHistoryItem(hi.getAttribute('data-term'), e);
+    }
+  });
+
+  // Keyboard navigation
+  searchInput.addEventListener('keydown', function(e) {
+    if (!dropdown.classList.contains('open')) return;
+    var items = dropdown.querySelectorAll('.search-dropdown-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (dropdownActiveIdx < items.length - 1) dropdownActiveIdx++;
+      else dropdownActiveIdx = 0;
+      updateDropdownActive(items);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (dropdownActiveIdx > 0) dropdownActiveIdx--;
+      else dropdownActiveIdx = items.length - 1;
+      updateDropdownActive(items);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (dropdownActiveIdx >= 0 && items[dropdownActiveIdx]) {
+        var sectionId = items[dropdownActiveIdx].getAttribute('data-section');
+        saveHistory(searchInput.value.trim());
+        dropdown.classList.remove('open');
+        var el = document.getElementById(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else if (e.key === 'Escape') {
+      dropdown.classList.remove('open');
+      searchInput.blur();
+    }
+  });
+
+  function updateDropdownActive(items) {
+    items.forEach(function(item, i) {
+      item.classList.toggle('active', i === dropdownActiveIdx);
+    });
+  }
+
+  // Global keyboard shortcut: Ctrl+K / Cmd+K
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    }
+  });
+
+  // ========== Table Copy Buttons ==========
+  document.querySelectorAll('.tbl-wrap').forEach(function(wrap) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = '📋 复制';
+    btn.title = '复制表格内容';
+    wrap.appendChild(btn);
+
+    btn.addEventListener('click', function() {
+      var table = wrap.querySelector('table');
+      var rows = table.querySelectorAll('tr');
+      var text = [];
+      rows.forEach(function(row) {
+        var cells = [];
+        row.querySelectorAll('th, td').forEach(function(cell) {
+          cells.push(cell.textContent.trim());
+        });
+        text.push(cells.join('\t'));
+      });
+      var clipboardText = text.join('\n');
+
+      navigator.clipboard.writeText(clipboardText).then(function() {
+        btn.textContent = '✅ 已复制';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = '📋 复制';
+          btn.classList.remove('copied');
+        }, 1500);
+      }).catch(function() {
+        // Fallback
+        var ta = document.createElement('textarea');
+        ta.value = clipboardText;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = '✅ 已复制';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = '📋 复制';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    });
+  });
+
+  // ========== Bookmarks ==========
+  var STORAGE_KEY = 'grammar-bookmarks';
+  var bookmarks = [];
+
+  function loadBookmarks() {
+    try {
+      bookmarks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch(e) { bookmarks = []; }
+  }
+
+  function saveBookmarks() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(bookmarks));
+  }
+
+  function renderFavs() {
+    var list = document.getElementById('favList');
+    if (bookmarks.length === 0) {
+      list.innerHTML = '<div class="sidebar-fav-empty">点击章节旁的 ☆ 收藏</div>';
+      return;
+    }
+    var html = '';
+    bookmarks.forEach(function(bm) {
+      html += '<a href="#' + bm.id + '" class="sidebar-fav-item" data-fav="' + bm.id + '">' +
+        '<span class="fav-star">★</span>' + bm.title + '</a>';
+    });
+    list.innerHTML = html;
+
+    // Click handler for fav items
+    list.querySelectorAll('.sidebar-fav-item').forEach(function(item) {
+      item.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768) closeSidebar();
+        var el = document.getElementById(this.dataset.fav);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  }
+
+  // Inject bookmark buttons into section h2s
+  secs.forEach(function(sec) {
+    var h2 = sec.querySelector('h2');
+    if (!h2) return;
+    var btn = document.createElement('button');
+    btn.className = 'bookmark-btn';
+    btn.title = '收藏此章节';
+    btn.setAttribute('aria-label', '收藏');
+    btn.textContent = bookmarks.some(function(b) { return b.id === sec.id; }) ? '★' : '☆';
+    if (btn.textContent === '★') btn.classList.add('bookmarked');
+    h2.appendChild(btn);
+
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var isBookmarked = bookmarks.some(function(b) { return b.id === sec.id; });
+      if (isBookmarked) {
+        bookmarks = bookmarks.filter(function(b) { return b.id !== sec.id; });
+        btn.textContent = '☆';
+        btn.classList.remove('bookmarked');
+        showToast('已取消收藏');
+      } else {
+        bookmarks.push({ id: sec.id, title: h2.textContent.replace(/[★☆]/g, '').trim() });
+        btn.textContent = '★';
+        btn.classList.add('bookmarked');
+        showToast('⭐ 已收藏');
+      }
+      saveBookmarks();
+      renderFavs();
+    });
+  });
+
+  // ========== Detail Panel Toggle ==========
+  document.querySelectorAll('.detail-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var panel = document.getElementById(this.dataset.target);
+      if (!panel) return;
+      var isOpen = panel.classList.contains('open');
+      if (isOpen) {
+        panel.classList.remove('open');
+        this.classList.remove('expanded');
+        this.setAttribute('aria-expanded', 'false');
+        this.querySelector('.dt-label').textContent = '📖 详解';
+      } else {
+        panel.classList.add('open');
+        this.classList.add('expanded');
+        this.setAttribute('aria-expanded', 'true');
+        this.querySelector('.dt-label').textContent = '📖 收起';
+      }
+    });
+  });
+
+  // ========== 50音图 动词变形对照（含自动演示） ==========
+  (function() {
+    var grid = document.getElementById('gojuonGrid');
+    var legend = document.getElementById('gojuonLegend');
+    var autoplayBtn = document.getElementById('gojuonAutoplay');
+    if (!grid || !legend) return;
+
+    var rows = [
+      { label: 'あ行', kana: ['あ','い','う','え','お'] },
+      { label: 'か行', kana: ['か','き','く','け','こ'] },
+      { label: 'さ行', kana: ['さ','し','す','せ','そ'] },
+      { label: 'た行', kana: ['た','ち','つ','て','と'] },
+      { label: 'な行', kana: ['な','に','ぬ','ね','の'] },
+      { label: 'は行', kana: ['は','ひ','ふ','へ','ほ'] },
+      { label: 'ま行', kana: ['ま','み','む','め','も'] },
+      { label: 'や行', kana: ['や','','ゆ','','よ'] },
+      { label: 'ら行', kana: ['ら','り','る','れ','ろ'] },
+      { label: 'わ行', kana: ['わ','','','','を'] }
+    ];
+
+    var patterns = {
+      godan: {
+        cells: [{r:1,c:0,t:'ない形'},{r:1,c:1,t:'ます形'},{r:1,c:2,t:'辞书形'},{r:1,c:3,t:'ば形'},{r:1,c:4,t:'意志形'}],
+        desc: '<b>五段动词</b>的词尾跨越<b>あ·い·う·え·お</b>全部五段。以<span class="jp-inline">書く</span>的<span class="jp-inline">か行</span>为例：<span class="jp-inline">か</span>（書かない）→ <span class="jp-inline">き</span>（書きます）→ <span class="jp-inline">く</span>（書く）→ <span class="jp-inline">け</span>（書けば）→ <span class="jp-inline">こ</span>（書こう）。这正是"五段"名称的由来——<b>同一行内穿越全部五个段</b>。',
+        cls: 'godan'
+      },
+      ichidan: {
+        cells: [{r:9,c:1,t:'词干在い段'},{r:9,c:3,t:'词干在え段'}],
+        desc: '<b>一段动词</b>的词干末端始终固定在<b>い段或え段</b>，变形时只去掉<span class="jp-inline">る</span>接续，<b>不跨行移动</b>。如<span class="jp-inline">食べる</span>的词干<span class="jp-inline">食べ</span>始终在<span class="jp-inline">え段</span>：<span class="jp-inline">食べます·食べない·食べて·食べれば</span>。这就是"一段"的含义——只用<b>一个段</b>。',
+        cls: 'ichidan'
+      },
+      sahen: {
+        cells: [{r:2,c:0,t:'未然（さ）'},{r:2,c:1,t:'连用（し）'},{r:2,c:2,t:'终止（す）'},{r:2,c:3,t:'假定（せ）'},{r:2,c:4,t:'意志（そ）'}],
+        desc: '<b>サ変动词</b>（する）同样跨越五段，使用<span class="jp-inline">さ行</span>：<span class="jp-inline">さ</span>→<span class="jp-inline">し</span>（します）→<span class="jp-inline">す</span>（する）→<span class="jp-inline">せ</span>（すれば·せよ）→<span class="jp-inline">そ</span>（しよう）。因为<span class="jp-inline">さ行</span>的<span class="jp-inline">い段</span>是<span class="jp-inline">し</span>（不是"si"），这导致了サ変变形的独特性。',
+        cls: 'sahen'
+      },
+      kahen: {
+        cells: [{r:1,c:4,t:'ない形（こ）'},{r:1,c:1,t:'ます形（き）'},{r:1,c:2,t:'辞书形（く）'},{r:1,c:3,t:'ば形（け）'},{r:1,c:4,t:'意志形（こ）'}],
+        desc: '<b>カ変动词</b>仅<span class="jp-inline">来る（くる）</span>一词。其<b>最大特点</b>：变形顺序<b>不按</b>あ→い→う→え→お走——①<b>あ段不使用</b>（ない形不在<span class="jp-inline">か</span>而在<b>お段</b><span class="jp-inline">こ</span>），②<b>お段出现两次</b>（<span class="jp-inline">こ</span>既是ない形又是意志形）。实际顺序：<span class="jp-inline">こ</span>→<span class="jp-inline">き</span>→<span class="jp-inline">く</span>→<span class="jp-inline">け</span>→<span class="jp-inline">こ</span>。五段の"教科书式"左→右 vs カ変の"乱序跳跃"——对比之下不规则一目了然。',
+        cls: 'kahen',
+        sorted: false
+      }
+    };
+
+    var active = 'godan';
+    var autoPlaying = false;
+    var autoTimer = null;
+    var vtypeOrder = ['godan', 'ichidan', 'sahen', 'kahen'];
+
+    // ---- 静态渲染：全部高亮格一次性显示 ----
+    function renderStatic(vtype) {
+      var pat = patterns[vtype];
+      var hlSet = {};
+      var tagMap = {};
+      pat.cells.forEach(function(c) {
+        var key = c.r + ',' + c.c;
+        hlSet[key] = true;
+        // 处理同一位置多个标签（如カ変こ＝ない形＋意志形）
+        if (tagMap[key]) { tagMap[key] = tagMap[key] + ' · ' + c.t; }
+        else { tagMap[key] = c.t; }
+      });
+      grid.innerHTML = buildGridHTML(hlSet, tagMap, pat.cls);
+      legend.innerHTML = pat.desc;
+    }
+
+    // ---- 步进渲染：只显示 step 以内的高亮格 ----
+    function renderStep(vtype, step) {
+      var pat = patterns[vtype];
+      var cells = pat.cells;
+      if (pat.sorted !== false) { cells = cells.slice().sort(function(a, b) { return a.c - b.c; }); }
+      var hlSet = {};
+      var tagMap = {};
+      var newKey = null;
+      for (var i = 0; i <= step && i < cells.length; i++) {
+        var c = cells[i];
+        var key = c.r + ',' + c.c;
+        hlSet[key] = true;
+        tagMap[key] = c.t;
+        if (i === step) newKey = key;
+      }
+      grid.innerHTML = buildGridHTML(hlSet, tagMap, pat.cls, newKey, step);
+      legend.innerHTML = pat.desc;
+    }
+
+    function buildGridHTML(hlSet, tagMap, cls, newKey, stepIdx) {
+      var h = '';
+      rows.forEach(function(row, ri) {
+        h += '<div class="gr">' + row.label + '</div>';
+        row.kana.forEach(function(k, ci) {
+          var key = ri + ',' + ci;
+          if (!k) { h += '<div class="gc"></div>'; return; }
+          if (hlSet[key]) {
+            var isNew = (newKey === key);
+            var animClass = isNew && (typeof stepIdx === 'number') ? ' anim-step' : '';
+            var stepLabel = (typeof stepIdx === 'number') ? '<span class="step-num">' + (stepIdx + 1) + '</span>' : '';
+            h += '<div class="gc hl ' + cls + animClass + '"><span class="tag">' + stepLabel + tagMap[key] + '</span>' + k + '</div>';
+          } else {
+            h += '<div class="gc">' + k + '</div>';
+          }
+        });
+      });
+      return h;
+    }
+
+    // ---- 自动演示 ----
+    function startAutoPlay() {
+      autoPlaying = true;
+      autoplayBtn.textContent = '⏸ 停止演示';
+      autoplayBtn.classList.add('playing');
+
+      // 从当前 active 类型开始
+      var startIdx = vtypeOrder.indexOf(active);
+      if (startIdx < 0) startIdx = 0;
+      playTypeLoop(startIdx);
+    }
+
+    function stopAutoPlay() {
+      autoPlaying = false;
+      autoplayBtn.textContent = '▶ 自动演示';
+      autoplayBtn.classList.remove('playing');
+      if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+      renderStatic(active);
+    }
+
+    function playTypeLoop(idx) {
+      if (!autoPlaying) return;
+      var vtype = vtypeOrder[idx];
+      active = vtype;
+
+      // 更新按钮状态
+      var all = document.querySelectorAll('#gojuonToggles .gojuon-toggle');
+      for (var i = 0; i < all.length; i++) { all[i].classList.remove('active'); }
+      var btn = document.querySelector('#gojuonToggles [data-vtype="' + vtype + '"]');
+      if (btn) btn.classList.add('active');
+
+      var pat = patterns[vtype];
+      var cells = pat.cells;
+      if (pat.sorted !== false) { cells = cells.slice().sort(function(a, b) { return a.c - b.c; }); }
+      legend.innerHTML = pat.desc;
+
+      // 第0步：展示无高亮的基础网格
+      renderStep(vtype, -1);
+      var total = cells.length;
+      var current = 0;
+
+      function revealNext() {
+        if (!autoPlaying) return;
+        if (current < total) {
+          renderStep(vtype, current);
+          current++;
+          // 第一个格稍长等待（让学生看清空网格→第一个格的变化）
+          var delay = (current === 1) ? 500 : 450;
+          autoTimer = setTimeout(revealNext, delay);
+        } else {
+          // 全部展示完毕，停留观察 2.2 秒
+          autoTimer = setTimeout(function() {
+            if (!autoPlaying) return;
+            var nextIdx = (idx + 1) % vtypeOrder.length;
+            // 切换类型前短暂清屏
+            autoTimer = setTimeout(function() {
+              playTypeLoop(nextIdx);
+            }, 300);
+          }, 2200);
+        }
+      }
+
+      // 从基础网格到第一个格之间加 400ms 停顿
+      autoTimer = setTimeout(revealNext, 400);
+    }
+
+    // ---- 事件绑定 ----
+    // 自动演示按钮
+    if (autoplayBtn) {
+      autoplayBtn.addEventListener('click', function() {
+        if (autoPlaying) { stopAutoPlay(); }
+        else { startAutoPlay(); }
+      });
+    }
+
+    // 手动切换按钮
+    document.getElementById('gojuonToggles').addEventListener('click', function(e) {
+      var btn = e.target.closest('.gojuon-toggle');
+      if (!btn) return;
+      var vt = btn.getAttribute('data-vtype');
+      if (vt === active && !autoPlaying) return;
+
+      // 手动点击 → 停止自动演示
+      if (autoPlaying) stopAutoPlay();
+
+      active = vt;
+      var all = this.querySelectorAll('.gojuon-toggle');
+      for (var i = 0; i < all.length; i++) { all[i].classList.remove('active'); }
+      btn.classList.add('active');
+      renderStatic(active);
+    });
+
+    // 初始化
+    renderStatic('godan');
+  })();
+
+  // ========== 格助词 行内展开 ==========
+  (function() {
+    var rows = document.querySelectorAll('.case-row');
+    if (!rows.length) return;
+    var current = null;
+    rows.forEach(function(row) {
+      row.addEventListener('click', function() {
+        var particle = row.getAttribute('data-particle');
+        var detail = document.getElementById('case-detail-' + particle);
+        if (!detail) return;
+
+        // 点击已展开的行 → 关闭
+        if (row.classList.contains('open')) {
+          row.classList.remove('open');
+          row.setAttribute('aria-expanded', 'false');
+          detail.classList.remove('open');
+          detail.querySelector('.case-detail-inner').style.maxHeight = '0';
+          current = null;
+          return;
+        }
+
+        // 先关闭之前展开的行
+        if (current) {
+          current.row.classList.remove('open');
+          current.row.setAttribute('aria-expanded', 'false');
+          current.detail.classList.remove('open');
+          current.detail.querySelector('.case-detail-inner').style.maxHeight = '0';
+        }
+
+        // 展开新行
+        row.classList.add('open');
+        row.setAttribute('aria-expanded', 'true');
+        detail.classList.add('open');
+        var inner = detail.querySelector('.case-detail-inner');
+        inner.style.maxHeight = inner.scrollHeight + 'px';
+        current = { row: row, detail: detail };
+      });
+    });
+  })();
+
+  // ========== 使用指南 sticky banner + demo toggle + close ==========
+  (function() {
+    var guide = document.getElementById('usageGuide');
+    var demoToggle = document.getElementById('demoToggle');
+    var demoPanel = document.getElementById('usageGuideDemo');
+    var closeBtn = document.getElementById('usageGuideClose');
+
+    // 已关闭过就不再显示
+    if (localStorage.getItem('wb-guide-closed') === '1' && guide) {
+      guide.classList.add('hidden');
+    }
+
+    // 关闭按钮
+    if (closeBtn && guide) {
+      closeBtn.addEventListener('click', function() {
+        guide.classList.add('hidden');
+        localStorage.setItem('wb-guide-closed', '1');
+      });
+    }
+
+    // 演示 toggle
+    if (demoToggle && demoPanel) {
+      demoToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var open = demoToggle.classList.toggle('expanded');
+        if (open) {
+          demoPanel.classList.add('open');
+          demoPanel.style.maxHeight = demoPanel.scrollHeight + 'px';
+        } else {
+          demoPanel.classList.remove('open');
+          demoPanel.style.maxHeight = '0';
+        }
+      });
+    }
+  })();
+
+  // ========== 表格横向滚动阴影指示器 ==========
+  (function() {
+    if (window.innerWidth > 768) return;
+    var wraps = document.querySelectorAll('.tbl-wrap');
+    function updateShadow(wrap) {
+      var hasScroll = wrap.scrollWidth > wrap.clientWidth + 2;
+      var scrolledToEnd = wrap.scrollLeft + wrap.clientWidth >= wrap.scrollWidth - 4;
+      if (hasScroll && !scrolledToEnd) {
+        wrap.classList.add('scrollable');
+      } else {
+        wrap.classList.remove('scrollable');
+      }
+    }
+    wraps.forEach(function(wrap) {
+      wrap.addEventListener('scroll', function() { updateShadow(wrap); });
+      updateShadow(wrap);
+    });
+    window.addEventListener('resize', function() {
+      wraps.forEach(function(wrap) { updateShadow(wrap); });
+    });
+  })();
+
+  // ========== 移动端侧边栏滑动手势 ==========
+  (function() {
+    if (window.innerWidth > 768) return;
+    var startX = 0, startY = 0;
+    var EDGE = 30;        // 左边缘触发宽度
+    var THRESHOLD = 60;   // 最小滑动距离
+    var MAX_ANGLE = 40;   // 最大垂直偏离角度
+
+    document.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+      var dx = e.changedTouches[0].clientX - startX;
+      var dy = Math.abs(e.changedTouches[0].clientY - startY);
+      var isHorizontal = Math.abs(dx) > dy * 2 && Math.abs(dx) > THRESHOLD;
+
+      if (!isHorizontal) return;
+
+      if (dx > 0 && startX < EDGE && !sidebar.classList.contains('open')) {
+        openSidebar();
+      } else if (dx < 0 && sidebar.classList.contains('open')) {
+        closeSidebar();
+      }
+    });
+  })();
+
+  // ========== ARIA 属性注入 ==========
+  (function() {
+    // detail-toggle 按钮
+    document.querySelectorAll('.detail-toggle').forEach(function(btn) {
+      var target = btn.getAttribute('data-target');
+      btn.setAttribute('aria-expanded', 'false');
+      if (target) btn.setAttribute('aria-controls', target);
+    });
+    // case-row
+    document.querySelectorAll('.case-row').forEach(function(row) {
+      row.setAttribute('role', 'button');
+      row.setAttribute('tabindex', '0');
+      row.setAttribute('aria-expanded', 'false');
+      var particle = row.getAttribute('data-particle');
+      if (particle) row.setAttribute('aria-controls', 'case-detail-' + particle);
+      // Enter/Space keyboard activation
+      row.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); row.click(); }
+      });
+    });
+    // 表格 aria
+    document.querySelectorAll('table.tbl').forEach(function(tbl) {
+      tbl.querySelectorAll('th').forEach(function(th, i) {
+        if (!th.hasAttribute('scope')) th.setAttribute('scope', 'col');
+      });
+    });
+    // 侧边栏 aria
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar) sidebar.setAttribute('aria-label', '目录导航');
+    var hamburger = document.getElementById('hamburger');
+    if (hamburger) { hamburger.setAttribute('aria-expanded', 'false'); hamburger.setAttribute('aria-controls', 'sidebar'); }
+  })();
+
+  // ========== 格助词行内关闭按钮 ==========
+  (function() {
+    document.querySelectorAll('.case-detail-inner').forEach(function(inner) {
+      var closeBtn = document.createElement('button');
+      closeBtn.innerHTML = '✕';
+      closeBtn.title = '收起';
+      closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:none;border:none;font-size:1.1em;cursor:pointer;color:var(--text3);padding:4px 6px;line-height:1;border-radius:4px;transition:color .2s';
+      closeBtn.addEventListener('mouseenter', function() { closeBtn.style.color = 'var(--text)'; });
+      closeBtn.addEventListener('mouseleave', function() { closeBtn.style.color = 'var(--text3)'; });
+      closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var detail = inner.closest('.case-detail');
+        var row = detail.previousElementSibling;
+        if (row && row.classList.contains('case-row')) {
+          row.classList.remove('open');
+          row.setAttribute('aria-expanded', 'false');
+        }
+        detail.classList.remove('open');
+        inner.style.maxHeight = '0';
+      });
+      inner.style.position = 'relative';
+      inner.insertBefore(closeBtn, inner.firstChild);
+    });
+  })();
+
+  // ========== Toast ==========
+  function showToast(msg, duration) {
+    duration = duration || 1800;
+    var container = document.getElementById('toastContainer');
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = msg;
+    container.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('show'); });
+    setTimeout(function() {
+      toast.classList.remove('show');
+      setTimeout(function() { toast.remove(); }, 300);
+    }, duration);
+  }
+
+  // ========== Progress Bar ==========
+  // 进度条更新已合并到上方 rAF 节流 scroll handler 中
+
+  // ========== 学习路径点击 ==========
+  (function() {
+    document.getElementById('learningPath').addEventListener('click', function(e) {
+      var step = e.target.closest('.lp-step');
+      if (!step) return;
+      var target = step.getAttribute('data-target');
+      var el = target ? document.getElementById(target) : null;
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  })();
+
+  // ========== Search 重写 (下拉面板 + 历史 + 键盘导航) ==========
+  loadBookmarks();
+  renderFavs();
+  updateActiveNav();
+})();
+</script>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+</body>
+</html>
